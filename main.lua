@@ -1,3 +1,4 @@
+debug = true
 -- utils
 function tablelength(T)
   local count = 0
