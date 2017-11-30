@@ -152,6 +152,12 @@ function playerCreate()
 	player['image'] = love.graphics.newImage('gfx/deeku.png')
 	player['arrival'] = 'left'
 	
+	--stats player
+	player['hp'] = 100
+	player['max_hp'] = 100
+	player['fatigue'] = 0
+	player['promilles'] = 0
+	
 	player['frames'] = {}
 	--directional frames player
 	player['frames']['down'] = {}
@@ -423,6 +429,26 @@ function gamePreload()
 	actorGeneration()
 end
 
+function applyPlayerEffect(effect, context_variable)
+	-- apply any kind of effect based on name on player.
+	if effect == "takeDamage" then
+		-- todo: apply sound effect, color splash and shit
+		-- goreShitSoundEffect:play()
+		-- goreShitVisuals()
+		alterPlayerStat("hp", context_variable, "minus")
+	end
+end
+
+function alterPlayerStat(stat_name, amount, operator)
+	-- alter a player stat by an amount. Operator is either "plus" or "minus".
+	-- todo: you can jsut fix this to be mathematically correct, no need for "extra" logic..........
+	if operator == "plus" then
+		player[stat_name] = player[stat_name] + amount
+	elseif operator == "minus" then
+		player[stat_name] = player[stat_name] - amount
+	end
+end
+
 function player_move(coord_x, coord_y, map)
 	-- check where player is about to move, allow or disallow move based on that and resolve effects
 	-- apply speed / delay factor to movement
@@ -479,10 +505,19 @@ function actor_move(actor, coord_x, coord_y)
 	
 					-- tile in question can be moved on?
 					if tile_attrs[map[coord_x][coord_y]] == nil then
-						-- move. set it on path
-						actors[actor]['moving'] = actors[actor]['weight']
-						actors[actor]['x'] = coord_x
-						actors[actor]['y'] = coord_y
+						overlap = false
+						-- no actor would be overlapping with move?
+						for i=1, tablelength(actors) do
+							if coord_x == actors[i]['x'] and coord_y == actors[i]['y'] then
+								overlap = true
+							end
+						end
+						if overlap == false then
+							-- move. set it on path
+							actors[actor]['moving'] = actors[actor]['weight']
+							actors[actor]['x'] = coord_x
+							actors[actor]['y'] = coord_y
+						end
 					end
 				end
 
@@ -577,12 +612,25 @@ function drawGame()
 	end
 end
 
+function drawUI()
+	-- draw ingame ui, hitpoints etc indicator
+	love.graphics.setColor(255,0,0)
+	love.graphics.rectangle("fill", 20, 400, player['hp'], 20)
+end
+
+function drawEffects()
+	-- visual effects, hallucinations etc. miscellanous stuff
+	damage_factor = 255 - player['health']
+	love.graphics.setColor(255,damage_factor,damage_factor)
+end
+
 function love.draw()
 	if menu == 1 then
 		drawMenu()
 	end
 	if game == 1 then
 		drawGame()
+		drawUI()
 	end
 end
 
