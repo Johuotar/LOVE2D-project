@@ -458,6 +458,11 @@ end
 function playerGrunt()
     -- todo: generalize, AKA should be playerSoundFX(), not just for grunts
 	-- play a grunt sound from player, randomized with random pitch.
+	for i=1, tablelength(player['grunts']) do
+		if player['grunts'][i]:isPlaying() then
+			player['grunts'][i]:stop()
+		end
+	end
 	grunt = love.math.random(tablelength(player['grunts']))
 	pitch = love.math.random()
 	if pitch < 0.5 then
