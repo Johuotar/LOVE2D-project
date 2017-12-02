@@ -220,8 +220,12 @@ function runActorLogic(actor)
 		elseif dir == 4 then
 			actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
 		elseif dir == 5 then
+      -- no move
 		end
 		actors[actor]['moving'] = actors[actor]['moving'] - 1
+    if actors[actor]['hp'] < 1 then
+      actors[actor]['destroyed'] = true
+    end
 	end
 	if actors[actor]['type'] == 'demon' then
 		-- demon glides around
@@ -231,6 +235,9 @@ function runActorLogic(actor)
 		actor_move(actor, actors[actor]['x'] + dir_x, actors[actor]['y'] + dir_y)
 		
 		actors[actor]['moving'] = actors[actor]['moving'] - 1
+    if actors[actor]['hp'] < 1 then
+      actors[actor]['destroyed'] = true
+    end
 	end
 
 end
@@ -296,11 +303,12 @@ function playerArrive()
 end
 
 function playerUseItem()
-	-- launch a player attack depending on weapon type.
+	-- launch a player item use depending on chosen item.
 	if player['cooldown'] < 1 then
 		if player['equipped'] == 'puke' then
 			-- create a puke ball
 			createNewProjectile('puke', player['x'], player['y'], player['direction'])
+      player['cooldown'] = 25
 		end
 	end
 end
@@ -588,6 +596,10 @@ function gamePreload()
 	actorGeneration()
 end
 
+function damageActor(actor, projectile)
+  -- todo: compare projectile and actor to see what effect was on actor
+end
+
 function goreVisuals()
 	-- gore: splash screen red quickly when taking damage
 	-- todo: use an alpha layered blood splash image as effect?
@@ -692,7 +704,7 @@ function actor_move(actor, coord_x, coord_y)
 end
 
 function projectile_move(projectile, coord_x, coord_y)
-	-- same as above, a lot simpler though. Theres only boundary and negative space check for projectiles.
+	-- movement for projectiles. Major difference is that projectiles are removed immediately when they are "stuck"
 	-- are we inside bounds?
 	if coord_x > 0 and coord_x <= tablelength(map) then
 		
@@ -706,9 +718,13 @@ function projectile_move(projectile, coord_x, coord_y)
             projectiles[projectile]['moving'] = projectiles[projectile]['weight']
             projectiles[projectile]['x'] = coord_x
             projectiles[projectile]['y'] = coord_y
+          else
+            projectiles[projectile]['destroyed'] = true
           end
         end
-			end
+			else
+        projectiles[projectile]['destroyed'] = true
+      end
     end
 	else
 		-- destroy projectile if it considered moving out of bounds.
@@ -732,7 +748,16 @@ function checkProjectileCollision(projectile)
 	for i=1, tablelength(actors) do
 		if projectiles[projectile]['x'] == actors[i]['x'] and projectiles[projectile]['y'] == actors[i]['y'] then
 			if projectiles[projectile]['type'] == 'puke' then
-
+        --puke does a lot of spiritual damage but only neglible physical damage
+        -- todo: apply both once separate stats are made??
+        spiritual_damage = actors[i]['spiritual_factor'] * 25
+        physical_damage = actors[i]['physical_factor'] * 1
+        if spiritual_damage > physical_damage then
+          actors[i]['hp'] = actors[i]['hp'] - spiritual_damage
+        else
+          actors[i]['hp'] = actors[i]['hp'] - physical_damage
+        end
+        setProjectileToBeRemoved(projectile)
 			end
 		end
 	end
@@ -792,6 +817,7 @@ function handleGame()
 		handleProjectiles()
 		playerControls()
 		player['moving'] = player['moving'] - 1
+    player['cooldown'] = player['cooldown'] - 1
 	--loading a new area
 	else
 		start_map = generateMap() --todo: change map variable name
@@ -844,9 +870,9 @@ end
 
 function drawProjectiles()
 	for i=1, tablelength(projectiles) do
-		love.graphics.draw(projectile_images[projectiles[i]['type']], projectiles[i]['x'] * tile_size, projectiles[i]['y'] * tile_size)
+		love.graphics.draw(projectile_images[projectiles[i]['type']], projectiles[i]['visual_x'], projectiles[i]['visual_y'])
     if projectiles[i]['visual_x'] < projectiles[i]['x'] * tile_size then
-			projectiles[i]['visual_x'] = projectiles[i]['visual_x'] + projectiles[i]['weight']
+			projectiles[i]['visual_x'] = projectiles[i]['visual_x'] + projectiles[i]['weight'] 
 		end
 		if projectiles[i]['visual_x'] > projectiles[i]['x'] * tile_size then
 			projectiles[i]['visual_x'] = projectiles[i]['visual_x'] - projectiles[i]['weight']
