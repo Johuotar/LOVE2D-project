@@ -310,6 +310,10 @@ function playerCreate()
 	player['grunts'][1] = love.audio.newSource('sfx/zombie-1.wav', 'static')
 	player['grunts'][2] = love.audio.newSource('sfx/zombie-2.wav', 'static')
 	player['grunts'][3] = love.audio.newSource('sfx/zombie-3.wav', 'static')
+  
+  player['attacks'] = {}
+  player['attacks']['puke'] = love.audio.newSource('sfx/zombie-8.wav', 'static')
+  player['attacks']['puke']:setPitch(1.5)
 end
 
 function playerArrive()
@@ -334,6 +338,8 @@ function playerUseItem()
 		if player['equipped'] == 'puke' then
 			-- create a puke ball
 			createNewProjectile('puke', player['x'], player['y'], player['direction'])
+      player['attacks']['puke']:stop()
+      player['attacks']['puke']:play()
       player['cooldown'] = 25
 		end
 	end
