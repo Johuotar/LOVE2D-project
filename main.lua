@@ -153,6 +153,7 @@ function createNewActor(of_type, coord_x, coord_y, weight)
 	actors[new_index]['moving'] = 0
 	actors[new_index]['weight'] = weight
 	actors[new_index]['destroyed'] = false
+  actors[new_index]['status'] = 'normal'
 	
 	-- variables that depend on actor type
 	-- lisko or demon: spiritual enemies. No damage gained from physical attacks
@@ -210,19 +211,44 @@ function runActorLogic(actor)
 	
 	--lisko: sprawl around randomly!
 	if actors[actor]['type'] == 'lisko' then
-		dir = love.math.random(5)
-		if dir == 1 then
-			actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
-		elseif dir == 2 then
-			actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
-		elseif dir == 3 then
-			actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
-		elseif dir == 4 then
-			actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
-		elseif dir == 5 then
-      -- no move
-		end
+    if actors[actor]['status'] == 'alert' then
+      -- chase player
+      if player['x'] < actors[actor]['x'] then
+        actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
+      end
+      if player['x'] > actors[actor]['x'] then
+        actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
+      end
+      if player['y'] < actors[actor]['y'] then
+        actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
+      end
+      if player['y'] > actors[actor]['y'] then
+        actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
+      end
+    else
+      dir = love.math.random(5)
+      if dir == 1 then
+        actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
+      elseif dir == 2 then
+        actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
+      elseif dir == 3 then
+        actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
+      elseif dir == 4 then
+        actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
+      elseif dir == 5 then
+        -- no move
+      end
+    end
 		actors[actor]['moving'] = actors[actor]['moving'] - 1
+    
+    -- set chasing status if player is too near
+    if player['x'] - actors[actor]['x'] < 5 and player['x'] - actors[actor]['x'] > -5 then
+      if player['y'] - actors[actor]['y'] < 5 and player['y'] - actors[actor]['y'] > -5 then
+        actors[actor]['status'] = 'alert'
+      end
+    else
+      actors[actor]['status'] = 'normal'
+    end
     if actors[actor]['hp'] < 1 then
       actors[actor]['destroyed'] = true
     end
@@ -852,6 +878,7 @@ end
 
 function drawActors()
 	for i=1, tablelength(actors) do
+    -- todo: active frames/animations system for actors
 		love.graphics.draw(resource, actors_images[actors[i]['type']], actors[i]['visual_x'], actors[i]['visual_y'])
 		if actors[i]['visual_x'] < actors[i]['x'] * tile_size then
 			actors[i]['visual_x'] = actors[i]['visual_x'] + 2
