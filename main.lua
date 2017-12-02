@@ -28,6 +28,9 @@ function love.load()
 	generateTileProperties()
 	tile_size = 20
 	
+	--global trigger etc. vars
+	gore_ticker = 0
+	
 	--tiles
 	loadTileResource()
 	loadActorImages()
@@ -96,6 +99,7 @@ end
 function handleActors()
 	for i=1, tablelength(actors) do
 		runActorLogic(i)
+		checkCollisionWithPlayer(i)
 	end
 end
 
@@ -109,6 +113,11 @@ function createNewActor(of_type, coord_x, coord_y, weight)
 	actors[new_index]['visual_y'] = coord_y * tile_size
 	actors[new_index]['moving'] = 0
 	actors[new_index]['weight'] = weight
+end
+
+function removeActor(actor)
+	--remove actor by id.
+	table.remove(actors[actor])
 end
 
 function runActorLogic(actor)
@@ -429,24 +438,28 @@ function gamePreload()
 	actorGeneration()
 end
 
+function goreVisuals()
+	-- gore: splash screen red quickly when taking damage
+	-- todo: use an alpha layered blood splash image as effect?
+	for i=1, gore_ticker do
+		love.graphics.setColor(255, 255-(gore_ticker*20), 255-(gore_ticker*20))
+	end
+end
+
 function applyPlayerEffect(effect, context_variable)
 	-- apply any kind of effect based on name on player.
 	if effect == "takeDamage" then
 		-- todo: apply sound effect, color splash and shit
 		-- goreShitSoundEffect:play()
-		-- goreShitVisuals()
-		alterPlayerStat("hp", context_variable, "minus")
+		gore_ticker = 20 -- set splash effect in motion
+		alterPlayerStat("hp", context_variable)
 	end
 end
 
-function alterPlayerStat(stat_name, amount, operator)
-	-- alter a player stat by an amount. Operator is either "plus" or "minus".
-	-- todo: you can jsut fix this to be mathematically correct, no need for "extra" logic..........
-	if operator == "plus" then
-		player[stat_name] = player[stat_name] + amount
-	elseif operator == "minus" then
-		player[stat_name] = player[stat_name] - amount
-	end
+function alterPlayerStat(stat_name, amount)
+	-- alter a player stat by an amount. Use minus value to subtract
+	player[stat_name] = player[stat_name] + amount
+	-- todo: need other operations to handle?
 end
 
 function player_move(coord_x, coord_y, map)
@@ -523,6 +536,17 @@ function actor_move(actor, coord_x, coord_y)
 
 			end
 			
+		end
+	end
+end
+
+function checkCollisionWithPlayer(actor)
+	-- if collision between id'd actor and player happens, do something
+	if actors[actor]['x'] == player['x'] and actors[actor]['y'] == player['y'] then
+		if actors[actor]['type'] == 'lisko' or actors[actor]['type'] == 'demon' then
+			applyPlayerEffect('takeDamage', -15)
+			removeActor(actor)
+			print("actor is kill")
 		end
 	end
 end
@@ -614,14 +638,22 @@ end
 
 function drawUI()
 	-- draw ingame ui, hitpoints etc indicator
-	love.graphics.setColor(255,0,0)
+	-- set global color vars depending on damage etc.
+	drawEffects()
 	love.graphics.rectangle("fill", 20, 400, player['hp'], 20)
 end
 
 function drawEffects()
 	-- visual effects, hallucinations etc. miscellanous stuff
-	damage_factor = 255 - player['health']
-	love.graphics.setColor(255,damage_factor,damage_factor)
+	
+	-- damage color "tint" - screen goes gray in accordance with damage amount
+	damage_factor = 155 + player['hp']
+	love.graphics.setColor(damage_factor,damage_factor,damage_factor)
+	
+	-- hit splash
+	if gore_ticker > 0 then
+		goreVisuals()
+	end
 end
 
 function love.draw()
