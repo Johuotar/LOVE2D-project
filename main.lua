@@ -33,7 +33,10 @@ function love.load()
 	
 	--tiles
 	loadTileResource()
+	
+	--other image resources
 	loadActorImages()
+	loadProjectileImages()
 	
 	--audio
 	loadJukeboxSongs()
@@ -114,10 +117,27 @@ function handleActors()
 	destroyActors()
 end
 
+function runProjectileLogic(projectile)
+	-- do something each iteration depending on projectile.
+	if projectiles[projectile]['type'] == 'puke' then
+		-- puke flies for some time in a direction then disappears unless it hits an enemy.
+		if projectiles[projectile]['direction'] == 'left' then
+			projectile_move(projectile, projectiles[projectile]['x'] - 1, projectiles[projectile]['y'])
+		elseif projectiles[projectile]['direction'] == 'right' then
+			projectile_move(projectile, projectiles[projectile]['x'] + 1, projectiles[projectile]['y'])
+		elseif projectiles[projectile]['direction'] == 'up' then
+			projectile_move(projectile, projectiles[projectile]['x'], projectiles[projectile]['y'] - 1)
+		elseif projectiles[projectile]['direction'] == 'down' then
+			projectile_move(projectile, projectiles[projectile]['x'], projectiles[projectile]['y'] + 1)
+		end
+    projectiles[projectile]['moving'] = projectiles[projectile]['moving'] - 1
+	end
+end
+
 function handleProjectiles()
 	for i=1, tablelength(projectiles) do
 		runProjectileLogic(i)
-		checkCollisionsForProjectiles()
+		checkProjectileCollision(i)
 	end
 	destroyProjectiles()
 end
@@ -150,6 +170,8 @@ function createNewProjectile(of_type, coord_x, coord_y, direction)
 	projectiles[new_index]['direction'] = direction
 	projectiles[new_index]['x'] = coord_x
 	projectiles[new_index]['y'] = coord_y
+  projectiles[new_index]['weight'] = 5
+  projectiles[new_index]['moving'] = 0
 	projectiles[new_index]['visual_x'] = coord_x * tile_size
 	projectiles[new_index]['visual_y'] = coord_y * tile_size
 	projectiles[new_index]['destroyed'] = false
@@ -160,11 +182,25 @@ function setActorToBeRemoved(actor)
 	actors[actor]['destroyed'] = true
 end
 
+function setProjectileToBeRemoved(projectile)
+	--set actor to be removed, as per table safety https://stackoverflow.com/questions/12394841/safely-remove-items-from-an-array-table-while-iterating
+	projectiles[projectile]['destroyed'] = true
+end
+
 function destroyActors()
 	-- iterate backwards, removing any actors set to be removed
 	for i=tablelength(actors),1,-1 do
 		if actors[i]['destroyed'] == true then
 			table.remove(actors, i)
+		end
+	end
+end
+
+function destroyProjectiles()
+	-- iterate backwards, removing any projectiles set to be removed
+	for i=tablelength(projectiles),1,-1 do
+		if projectiles[i]['destroyed'] == true then
+			table.remove(projectiles, i)
 		end
 	end
 end
@@ -259,9 +295,7 @@ function playerArrive()
 	end
 end
 
-
-
-function playerAttack()
+function playerUseItem()
 	-- launch a player attack depending on weapon type.
 	if player['cooldown'] < 1 then
 		if player['equipped'] == 'puke' then
@@ -657,6 +691,31 @@ function actor_move(actor, coord_x, coord_y)
 	end
 end
 
+function projectile_move(projectile, coord_x, coord_y)
+	-- same as above, a lot simpler though. Theres only boundary and negative space check for projectiles.
+	-- are we inside bounds?
+	if coord_x > 0 and coord_x <= tablelength(map) then
+		
+		for x=1, tablelength(map) do
+			if coord_y > 0 and coord_y <= tablelength(map[x]) then
+        -- not moving anymore?
+        if projectiles[projectile]['moving'] < 1 then
+          -- tile in question can be moved on?
+          if tile_attrs[map[coord_x][coord_y]] == nil then
+            -- move. set it on path
+            projectiles[projectile]['moving'] = projectiles[projectile]['weight']
+            projectiles[projectile]['x'] = coord_x
+            projectiles[projectile]['y'] = coord_y
+          end
+        end
+			end
+    end
+	else
+		-- destroy projectile if it considered moving out of bounds.
+		projectiles[projectile]['destroyed'] = true
+	end
+end
+
 function checkCollisionWithPlayer(actor)
 	-- if collision between id'd actor and player happens, do something
 	if actors[actor]['x'] == player['x'] and actors[actor]['y'] == player['y'] then
@@ -699,6 +758,29 @@ function gameOver()
 	game = 0
 end
 
+function playerControls()
+	-- todo: Something so you can bind keys
+	if love.keyboard.isDown('down') then
+		player_move(player['x'], player['y'] + 1, start_map)
+		player['direction'] = 'down'
+	elseif love.keyboard.isDown('up') then
+		player_move(player['x'], player['y'] - 1, start_map)
+		player['direction'] = 'up'
+	elseif love.keyboard.isDown('left') then
+		player_move(player['x'] - 1, player['y'], start_map)
+		player['direction'] = 'left'
+	elseif love.keyboard.isDown('right') then
+		player_move(player['x'] + 1, player['y'], start_map)
+		player['direction'] = 'right'
+	end
+	
+	-- attack/use active item
+	if love.keyboard.isDown('space') then
+		-- todo: check what item is active
+		playerUseItem()
+	end
+end
+
 --main game loop
 function handleGame()
 	--not loading a new area
@@ -707,19 +789,8 @@ function handleGame()
 		genericControls()
 		gameJukebox()
 		handleActors()
-		if love.keyboard.isDown('down') then
-			player_move(player['x'], player['y'] + 1, start_map)
-			player['direction'] = 'down'
-		elseif love.keyboard.isDown('up') then
-			player_move(player['x'], player['y'] - 1, start_map)
-			player['direction'] = 'up'
-		elseif love.keyboard.isDown('left') then
-			player_move(player['x'] - 1, player['y'], start_map)
-			player['direction'] = 'left'
-		elseif love.keyboard.isDown('right') then
-			player_move(player['x'] + 1, player['y'], start_map)
-			player['direction'] = 'right'
-		end
+		handleProjectiles()
+		playerControls()
 		player['moving'] = player['moving'] - 1
 	--loading a new area
 	else
@@ -771,6 +842,24 @@ function drawActors()
 	end
 end
 
+function drawProjectiles()
+	for i=1, tablelength(projectiles) do
+		love.graphics.draw(projectile_images[projectiles[i]['type']], projectiles[i]['x'] * tile_size, projectiles[i]['y'] * tile_size)
+    if projectiles[i]['visual_x'] < projectiles[i]['x'] * tile_size then
+			projectiles[i]['visual_x'] = projectiles[i]['visual_x'] + projectiles[i]['weight']
+		end
+		if projectiles[i]['visual_x'] > projectiles[i]['x'] * tile_size then
+			projectiles[i]['visual_x'] = projectiles[i]['visual_x'] - projectiles[i]['weight']
+		end
+		if projectiles[i]['visual_y'] < projectiles[i]['y'] * tile_size then
+			projectiles[i]['visual_y'] = projectiles[i]['visual_y'] + projectiles[i]['weight']
+		end
+		if projectiles[i]['visual_y'] > projectiles[i]['y'] * tile_size then
+			projectiles[i]['visual_y'] = projectiles[i]['visual_y'] - projectiles[i]['weight']
+		end
+	end
+end
+
 function drawGame()
 	if intermission == 0 then
 		drawSector(start_map)
@@ -790,6 +879,7 @@ function drawGame()
 			player['activeFrame'] = 1
 		end
 		drawActors()
+		drawProjectiles()
 		direction = player['direction']
 		activeFrame = player['activeFrame']
 		love.graphics.draw(player['image'], player['frames'][direction][activeFrame], player['visual_x'], player['visual_y'])
