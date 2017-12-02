@@ -44,6 +44,9 @@ function love.load()
 	--actorbase
 	actors = {}
 	
+	--projectilebase
+	projectiles = {}
+	
 	--do init stuff
 	gamePreload()
 end
@@ -96,12 +99,27 @@ function loadActorImages()
 	actors_images['light'] = love.graphics.newQuad(40,40,20,20,resource:getDimensions())
 end
 
+function loadProjectileImages()
+	projectile_images = {}
+	
+	-- todo: use quads
+	projectile_images['puke'] = love.graphics.newImage('gfx/puke.png')
+end
+
 function handleActors()
 	for i=1, tablelength(actors) do
 		runActorLogic(i)
 		checkCollisionWithPlayer(i)
 	end
 	destroyActors()
+end
+
+function handleProjectiles()
+	for i=1, tablelength(projectiles) do
+		runProjectileLogic(i)
+		checkCollisionsForProjectiles()
+	end
+	destroyProjectiles()
 end
 
 function createNewActor(of_type, coord_x, coord_y, weight)
@@ -115,6 +133,26 @@ function createNewActor(of_type, coord_x, coord_y, weight)
 	actors[new_index]['moving'] = 0
 	actors[new_index]['weight'] = weight
 	actors[new_index]['destroyed'] = false
+	
+	-- variables that depend on actor type
+	-- lisko or demon: spiritual enemies. No damage gained from physical attacks
+	if of_type == 'lisko' or of_type == 'demon' then
+		actors[new_index]['physical_factor'] = 0
+		actors[new_index]['spiritual_factor'] = 1
+		actors[new_index]['hp'] = 1
+	end
+end
+
+function createNewProjectile(of_type, coord_x, coord_y, direction)
+	new_index = tablelength(projectiles) + 1
+	projectiles[new_index] = {}
+	projectiles[new_index]['type'] = of_type
+	projectiles[new_index]['direction'] = direction
+	projectiles[new_index]['x'] = coord_x
+	projectiles[new_index]['y'] = coord_y
+	projectiles[new_index]['visual_x'] = coord_x * tile_size
+	projectiles[new_index]['visual_y'] = coord_y * tile_size
+	projectiles[new_index]['destroyed'] = false
 end
 
 function setActorToBeRemoved(actor)
@@ -171,12 +209,15 @@ function playerCreate()
 	player['weight'] = 10
 	player['image'] = love.graphics.newImage('gfx/deeku.png')
 	player['arrival'] = 'left'
+	player['cooldown'] = 0
+	player['direction'] = 'right'
 	
 	--stats player
 	player['hp'] = 100
 	player['max_hp'] = 100
 	player['fatigue'] = 0
 	player['promilles'] = 0
+	player['equipped'] = 'puke'
 	
 	player['frames'] = {}
 	--directional frames player
@@ -215,6 +256,18 @@ function playerArrive()
 	elseif player['arrival'] == 'down' then
 		player['y'] = tablelength(start_map[1]) --todo: fix map variable name
 		player['visual_y'] = tablelength(start_map[1]) * tile_size
+	end
+end
+
+
+
+function playerAttack()
+	-- launch a player attack depending on weapon type.
+	if player['cooldown'] < 1 then
+		if player['equipped'] == 'puke' then
+			-- create a puke ball
+			createNewProjectile('puke', player['x'], player['y'], player['direction'])
+		end
 	end
 end
 
@@ -607,6 +660,22 @@ function checkCollisionWithPlayer(actor)
 			setActorToBeRemoved(actor)
 		end
 	end
+end
+
+function checkProjectileCollision(projectile)
+	-- if collision between projectile and anything, do something
+	-- actors
+	for i=1, tablelength(actors) do
+		if projectiles[projectile]['x'] == actors[i]['x'] and projectiles[projectile]['y'] == actors[i]['y'] then
+			if projectiles[projectile]['type'] == 'puke' then
+
+			end
+		end
+	end
+	
+	-- player
+	
+	-- other projectiles
 end
 
 function checkPlayerStatus()
