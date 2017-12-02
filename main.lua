@@ -101,6 +101,7 @@ function handleActors()
 		runActorLogic(i)
 		checkCollisionWithPlayer(i)
 	end
+	destroyActors()
 end
 
 function createNewActor(of_type, coord_x, coord_y, weight)
@@ -113,11 +114,21 @@ function createNewActor(of_type, coord_x, coord_y, weight)
 	actors[new_index]['visual_y'] = coord_y * tile_size
 	actors[new_index]['moving'] = 0
 	actors[new_index]['weight'] = weight
+	actors[new_index]['destroyed'] = false
 end
 
-function removeActor(actor)
-	--remove actor by id.
-	table.remove(actors[actor])
+function setActorToBeRemoved(actor)
+	--set actor to be removed, as per table safety https://stackoverflow.com/questions/12394841/safely-remove-items-from-an-array-table-while-iterating
+	actors[actor]['destroyed'] = true
+end
+
+function destroyActors()
+	-- iterate backwards, removing any actors set to be removed
+	for i=tablelength(actors),1,-1 do
+		if actors[i]['destroyed'] == true then
+			table.remove(actors, i)
+		end
+	end
 end
 
 function runActorLogic(actor)
@@ -183,6 +194,12 @@ function playerCreate()
 	player['frames']['right'][2] = love.graphics.newQuad(20,20,20,20, player['image']:getDimensions())
 	player['direction'] = 'down'
 	player['activeFrame'] = 1
+	
+	--generic sound effects
+	player['grunts'] = {}
+	player['grunts'][1] = love.audio.newSource('sfx/zombie-1.wav', 'static')
+	player['grunts'][2] = love.audio.newSource('sfx/zombie-2.wav', 'static')
+	player['grunts'][3] = love.audio.newSource('sfx/zombie-3.wav', 'static')
 end
 
 function playerArrive()
@@ -385,7 +402,25 @@ function genericControls()
 	end
 end
 
+function playerGrunt()
+    -- todo: generalize, AKA should be playerSoundFX(), not just for grunts
+	-- play a grunt sound from player, randomized with random pitch.
+	grunt = love.math.random(tablelength(player['grunts']))
+	pitch = love.math.random()
+	if pitch < 0.5 then
+		pitch = 0.5
+	end
+	
+	player['grunts'][grunt]:setPitch(pitch)
+	player['grunts'][grunt]:play()
+end
+
 function menuJukebox()
+	for i=1, tablelength(jukebox) do
+		if jukebox[i]:isPlaying() == true then
+			jukebox[i]:stop()
+		end
+	end
 	menu_music:play()
 	menu_music:setLooping(true)
 end
@@ -414,7 +449,7 @@ function handleMenu()
 	menuJukebox()
 	genericControls()
 	if love.keyboard.isDown('down') then
-		menuchoice = menuchoice + 1
+			menuchoice = menuchoice + 1
 	elseif love.keyboard.isDown('up') then
 		menuchoice = menuchoice - 1
 	end
@@ -423,14 +458,37 @@ function handleMenu()
 	elseif menuchoice < 1 then
 		menuchoice = 1
 	end
-	if love.keyboard.isDown('return') then
-		if menuchoice == 1 then
-			game = 1
-			menu = 0
-		elseif menuchoice == 2 then
-			love.event.quit()
+	-- main menu
+	if menu == 1 then
+		
+		if love.keyboard.isDown('return') then
+			if menuchoice == 1 then
+				game = 1
+				menu = 0
+			elseif menuchoice == 2 then
+				love.event.quit()
+			end
 		end
 	end
+	-- game over menu
+	if menu == 2 then
+		if love.keyboard.isDown('return') then
+			if menuchoice == 1 then
+				gamePreload()
+				playerCreate()
+				game = 1
+				menu = 0
+			elseif menuchoice == 2 then
+				love.graphics.setColor(255,255,255)
+				game = 0
+				menu = 1
+			elseif menuchoice == 3 then
+				love.event.quit()
+			end
+		end
+	-- something broke and i dunno
+	end
+	
 end
 
 function gamePreload()
@@ -453,6 +511,7 @@ function applyPlayerEffect(effect, context_variable)
 		-- goreShitSoundEffect:play()
 		gore_ticker = 20 -- set splash effect in motion
 		alterPlayerStat("hp", context_variable)
+		playerGrunt()
 	end
 end
 
@@ -545,16 +604,32 @@ function checkCollisionWithPlayer(actor)
 	if actors[actor]['x'] == player['x'] and actors[actor]['y'] == player['y'] then
 		if actors[actor]['type'] == 'lisko' or actors[actor]['type'] == 'demon' then
 			applyPlayerEffect('takeDamage', -15)
-			removeActor(actor)
-			print("actor is kill")
+			setActorToBeRemoved(actor)
 		end
 	end
+end
+
+function checkPlayerStatus()
+	-- check and apply whatever persistent statuses player has. Also check death.
+	if player['hp'] < 1 then
+		gameOver()
+	end
+end
+
+function gameOver()
+	--game over, my dude, game over! You lose. Transition to end screen and tell player to f off
+	menu_items[1] = 'Takasin baanalle :p'
+	menu_items[2] = 'Mee valikkoo'
+	menu_items[3] = 'PAINU VITHUU :o'
+	menu = 2
+	game = 0
 end
 
 --main game loop
 function handleGame()
 	--not loading a new area
 	if intermission == 0 then
+		checkPlayerStatus() -- no point executing stuff if ur dead
 		genericControls()
 		gameJukebox()
 		handleActors()
@@ -582,15 +657,26 @@ function handleGame()
 end
 
 function drawMenu()
-	menu_base_pos = {}
-	menu_base_pos['x'] = 450
-	menu_base_pos['y'] = 200
-	love.graphics.draw(menu_bg, 0, 0)
-	for i=1, tablelength(menu_items) do
-		coord_y = menu_base_pos['y'] + (i * 100)
-		love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y) 
+	if menu == 1 then
+		menu_base_pos = {}
+		menu_base_pos['x'] = 450
+		menu_base_pos['y'] = 200
+		love.graphics.draw(menu_bg, 0, 0)
+		for i=1, tablelength(menu_items) do
+			coord_y = menu_base_pos['y'] + (i * 100)
+			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y) 
+		end
+		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 100))
+	elseif menu == 2 then
+		menu_base_pos = {}
+		menu_base_pos['x'] = 250
+		menu_base_pos['y'] = 150
+		for i=1, tablelength(menu_items) do
+			coord_y = menu_base_pos['y'] + (i * 80)
+			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y) 
+		end
+		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 80))
 	end
-	love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 100))
 end
 
 function drawActors()
@@ -648,26 +734,29 @@ function drawEffects()
 	
 	-- damage color "tint" - screen goes gray in accordance with damage amount
 	damage_factor = 155 + player['hp']
+	if player['hp'] < 25 then
+		damage_factor = damage_factor - 100
+	end
 	love.graphics.setColor(damage_factor,damage_factor,damage_factor)
 	
 	-- hit splash
 	if gore_ticker > 0 then
 		goreVisuals()
+		gore_ticker = gore_ticker - 1
 	end
 end
 
 function love.draw()
-	if menu == 1 then
+	if menu > 0 and game == 0 then
 		drawMenu()
-	end
-	if game == 1 then
+	elseif game == 1 and menu == 0 then
 		drawGame()
 		drawUI()
 	end
 end
 
 function love.update(dt)
-	if menu == 1 then
+	if menu > 0 and game == 0 then
 		handleMenu()
 	else
 		handleGame()
