@@ -286,6 +286,7 @@ end
 
 function playSoundEffect(effect)
   -- set volume level for clip and play it.
+  effect:stop()
   effect:setVolume(effects_volume * master_volume)
   effect:play()
 end
@@ -372,7 +373,6 @@ function playerUseItem()
 		if player['equipped'] == 'puke' then
 			-- create a puke ball
 			createNewProjectile('puke', player['x'], player['y'], player['direction'])
-      player['attacks']['puke']:stop()
       playSoundEffect(player['attacks']['puke'])
       player['cooldown'] = 25
 		end
@@ -666,30 +666,68 @@ function handleMenu()
   end
   -- options menu
 	if menu == 99 then
-    if love.keyboard.isDown('left') then
-      if menuchoice == 1 then
-        -- master volume lower
-        if master_volume > 0 then
-          master_volume = master_volume - 0.1
-          love.audio.setVolume(master_volume)
+    if menuCooldown < 0.1 then
+      if love.keyboard.isDown('left') then
+        if menuchoice == 1 then
+          -- master volume lower
+          if master_volume > 0 then
+            master_volume = master_volume - 0.1
+            love.audio.setVolume(master_volume)
+          end
+        elseif menuchoice == 2 then
+          -- effects volume lower
+          if effects_volume > 0 then
+            effects_volume = effects_volume - 0.1
+          end
+        elseif menuchoice == 3 then
+          -- music volume lower
+          if music_volume > 0 then
+            music_volume = music_volume - 0.1
+          end
+        elseif menuchoice == 4 then
+          -- speech volume lower
+          if speech_volume > 0 then
+            speech_volume = speech_volume - 0.1
+          end
         end
-      elseif menuchoice == 2 then
-        -- effects volume lower
-        if effects_volume > 0 then
-          effects_volume = effects_volume - 0.1
+        menuCooldown = 0.3
+      elseif love.keyboard.isDown('right') then
+        if menuchoice == 1 then
+          -- master volume higher
+          if master_volume < 1 then
+            master_volume = master_volume + 0.1
+            love.audio.setVolume(master_volume)
+          end
+        elseif menuchoice == 2 then
+          -- effects volume higher
+          if effects_volume < 1 then
+            effects_volume = effects_volume + 0.1
+          end
+        elseif menuchoice == 3 then
+          -- music volume higher
+          if music_volume < 1 then
+            music_volume = music_volume + 0.1
+          end
+        elseif menuchoice == 4 then
+          -- speech volume higher
+          if speech_volume < 1 then
+            speech_volume = speech_volume + 0.1
+          end
         end
-      elseif menuchoice == 3 then
-        -- music volume lower
-        if music_volume > 0 then
-          music_volume = music_volume - 0.1
-        end
-      elseif menuchoice == 4 then
-        -- speech volume lower
-        if speech_volume > 0 then
-          speech_volume = speech_volume - 0.1
+        menuCooldown = 0.3
+      elseif love.keyboard.isDown('return') then
+        if menuchoice == 5 then
+          menu_items = {}
+          menu_items[1] = 'Rymyämään ->'
+          menu_items[2] = 'Vääntämään :F'
+          menu_items[3] = 'Nukkumaan -.-'
+          menuchoice = 1
+          menuCooldown = 1
+          menu = 1
         end
       end
     end
+    menuCooldown = menuCooldown - 0.1
   end
 	
 end
@@ -966,10 +1004,19 @@ function drawMenu()
 		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 80))
 	elseif menu == 99 then
     menu_base_pos = {}
-		menu_base_pos['x'] = 250
-		menu_base_pos['y'] = 150
+		menu_base_pos['x'] = 100
+		menu_base_pos['y'] = 50
 		for i=1, tablelength(menu_items) do
 			coord_y = menu_base_pos['y'] + (i * 80)
+      if i==1 then
+        love.graphics.rectangle("fill", 100, i * 80, master_volume * 100, 60)
+      elseif i==2 then
+        love.graphics.rectangle("fill", 100, i * 80, effects_volume * 100, 60)
+      elseif i==3 then
+        love.graphics.rectangle("fill", 100, i * 80, music_volume * 100, 60)
+      elseif i==4 then
+        love.graphics.rectangle("fill", 100, i * 80, speech_volume * 100, 60)
+      end
 			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y) 
 		end
 		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 80))
@@ -1074,7 +1121,6 @@ end
 
 function love.update(dt)
   menuCooldown = math.max ( 0, menuCooldown - dt )
-  print(menuCooldown .. " seconds until menu can be moved")
 	if menu > 0 and game == 0 then
 		handleMenu()
 	else
