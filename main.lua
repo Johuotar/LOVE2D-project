@@ -1013,7 +1013,9 @@ end
 
 function love.update(dt)
   menuCooldown = math.max ( 0, menuCooldown - dt )
-  print(menuCooldown .. " seconds until menu can be moved")
+  if menuCooldown ~= 0 then
+    print(menuCooldown .. " seconds until menu can be moved")
+  end
 	if menu > 0 and game == 0 then
 		handleMenu()
 	else
