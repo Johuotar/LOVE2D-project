@@ -20,7 +20,8 @@ function love.load()
 	menu = 1
 	menu_items = {}
 	menu_items[1] = 'Rymyämään ->'
-	menu_items[2] = 'Nukkumaan -.-'
+  menu_items[2] = 'Vääntämään :F'
+	menu_items[3] = 'Nukkumaan -.-'
 	menuchoice = 1
   menuCooldown = 0--time until menu option can be changed
   menuWait = 0.3 --How often menu options can be changed
@@ -29,13 +30,19 @@ function love.load()
 	intermission = 0
 	generateTileProperties()
 	tile_size = 20
-	love.audio.setVolume( 0.25 )
   splashSize = 0.45
   splashIncreasing = true
   splashMaxSize = 0.55
   splashMinSize = 0.35
   splashText = "Undertale but not shit"
   
+  --option variables
+  --todo: save into an options file
+  master_volume = 0.25
+  love.audio.setVolume( master_volume ) -- all other volume levels are up to maximum of master_volume
+  music_volume = 1 
+  effects_volume = 1
+  speech_volume = 1
 
 	--global trigger etc. vars
 	gore_ticker = 0
@@ -277,6 +284,24 @@ function runActorLogic(actor)
 
 end
 
+function playSoundEffect(effect)
+  -- set volume level for clip and play it.
+  effect:setVolume(effects_volume * master_volume)
+  effect:play()
+end
+
+function playTrack(track)
+  --set volume level for track and play it.
+  track:setVolume(music_volume * master_volume)
+  track:play()
+end
+
+function playSpeech(clip)
+  -- speech clips modified by speech sound volume
+  clip:setVolume(speech_volume * master_volume)
+  clip:play()
+end
+
 function playerCreate()
 	player = {}
 	player['x'] = 1
@@ -348,7 +373,7 @@ function playerUseItem()
 			-- create a puke ball
 			createNewProjectile('puke', player['x'], player['y'], player['direction'])
       player['attacks']['puke']:stop()
-      player['attacks']['puke']:play()
+      playSoundEffect(player['attacks']['puke'])
       player['cooldown'] = 25
 		end
 	end
@@ -553,7 +578,7 @@ function playerGrunt()
 	end
 	
 	player['grunts'][grunt]:setPitch(pitch)
-	player['grunts'][grunt]:play()
+	playSoundEffect(player['grunts'][grunt])
 end
 
 function menuJukebox()
@@ -562,7 +587,7 @@ function menuJukebox()
 			jukebox[i]:stop()
 		end
 	end
-	menu_music:play()
+	playTrack(menu_music)
 	menu_music:setLooping(true)
 end
 
@@ -582,7 +607,7 @@ function gameJukebox()
 	end
 	if ended == true then
 		shuffle = love.math.random(tablelength(jukebox))
-		jukebox[shuffle]:play()
+		playTrack(jukebox[shuffle])
 	end
 end
 
@@ -609,7 +634,15 @@ function handleMenu()
 			if menuchoice == 1 then
 				game = 1
 				menu = 0
-			elseif menuchoice == 2 then
+      elseif menuchoice == 2 then
+        menuchoices = {}
+        menu_items[1] = 'Master'
+        menu_items[2] = 'Effekts'
+        menu_items[3] = 'Karaoke'
+        menu_items[4] = 'Sammallus'
+        menu_items[5] = 'POIS! >:o'
+        menu = 99
+			elseif menuchoice == 3 then
 				love.event.quit()
 			end
 		end
@@ -630,8 +663,34 @@ function handleMenu()
 				love.event.quit()
 			end
 		end
-	-- something broke and i dunno
-	end
+  end
+  -- options menu
+	if menu == 99 then
+    if love.keyboard.isDown('left') then
+      if menuchoice == 1 then
+        -- master volume lower
+        if master_volume > 0 then
+          master_volume = master_volume - 0.1
+          love.audio.setVolume(master_volume)
+        end
+      elseif menuchoice == 2 then
+        -- effects volume lower
+        if effects_volume > 0 then
+          effects_volume = effects_volume - 0.1
+        end
+      elseif menuchoice == 3 then
+        -- music volume lower
+        if music_volume > 0 then
+          music_volume = music_volume - 0.1
+        end
+      elseif menuchoice == 4 then
+        -- speech volume lower
+        if speech_volume > 0 then
+          speech_volume = speech_volume - 0.1
+        end
+      end
+    end
+  end
 	
 end
 
@@ -656,7 +715,6 @@ function applyPlayerEffect(effect, context_variable)
 	-- apply any kind of effect based on name on player.
 	if effect == "takeDamage" then
 		-- todo: apply sound effect, color splash and shit
-		-- goreShitSoundEffect:play()
 		gore_ticker = 20 -- set splash effect in motion
 		alterPlayerStat("hp", context_variable)
 		playerGrunt()
@@ -906,7 +964,16 @@ function drawMenu()
 			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y) 
 		end
 		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 80))
-	end
+	elseif menu == 99 then
+    menu_base_pos = {}
+		menu_base_pos['x'] = 250
+		menu_base_pos['y'] = 150
+		for i=1, tablelength(menu_items) do
+			coord_y = menu_base_pos['y'] + (i * 80)
+			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y) 
+		end
+		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 80))
+  end
 end
 
 function drawActors()
