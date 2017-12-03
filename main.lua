@@ -11,10 +11,12 @@ end
 -- end utils
 
 function love.load()
+  love.window.setMode(1024, 768)
 	menu_bg = love.graphics.newImage('gfx/bg/menu.jpg')
 	menu_music = love.audio.newSource('music/menu.ogg')
 	font = love.graphics.newFont('Avara.ttf', 40)
 	love.graphics.setFont(font)
+  preloadGraphicsResources()
 
     -- global ingame vars
 	menu = 1
@@ -29,7 +31,7 @@ function love.load()
 	game = 0
 	intermission = 0
 	generateTileProperties()
-	tile_size = 20
+	tile_size = 32  -- finally!! power of two
   splashSize = 0.45
   splashIncreasing = true
   splashMaxSize = 0.55
@@ -70,22 +72,26 @@ function love.load()
 	gamePreload()
 end
 
+function preloadGraphicsResources()
+  -- preload for handling all graphics resource files.
+  resource = love.graphics.newImage('gfx/Static_shit.png')
+  dynamics_resource = love.graphics.newImage('gfx/CharacterSheet.png')
+end
+
 function loadTileResource()
 	tiles = {}
-	resource = love.graphics.newImage('gfx/Assetit.png')
 	
-	tiles['wall_updown'] = love.graphics.newQuad(0,20,20,20,resource:getDimensions())
-	tiles['wall_leftright'] = love.graphics.newQuad(20,20,20,20,resource:getDimensions())
-	tiles['door_leftright'] = love.graphics.newQuad(40,20,20,20,resource:getDimensions())
-	tiles['door_updown'] = love.graphics.newQuad(60,20,20,20,resource:getDimensions())
-	tiles['wall_corner_nw'] = love.graphics.newQuad(0,40,20,20,resource:getDimensions())
-	tiles['wall_corner_sw'] = love.graphics.newQuad(0,60,20,20,resource:getDimensions())
-	tiles['wall_corner_ne'] = love.graphics.newQuad(20,40,20,20,resource:getDimensions())
-	tiles['wall_corner_se'] = love.graphics.newQuad(20,60,20,20,resource:getDimensions())
-	tiles['floor_wood'] = love.graphics.newQuad(60,60,20,20,resource:getDimensions())
-	tiles['floor_cement'] = love.graphics.newQuad(40,60,20,20,resource:getDimensions())
-	tiles['cmt'] = love.graphics.newQuad(40,60,20,20,resource:getDimensions())
-	tiles['cmt_old'] = love.graphics.newImage('gfx/cmt.png')
+	tiles['wall_updown'] = love.graphics.newQuad(32,32,32,32,resource:getDimensions())
+	tiles['wall_leftright'] = love.graphics.newQuad(0,32,32,32,resource:getDimensions())
+	tiles['door_leftright'] = love.graphics.newQuad(352,32,32,32,resource:getDimensions())
+	tiles['door_updown'] = love.graphics.newQuad(320,32,32,32,resource:getDimensions())
+	tiles['wall_corner_nw'] = love.graphics.newQuad(128,32,32,32,resource:getDimensions())
+	tiles['wall_corner_sw'] = love.graphics.newQuad(160,32,32,32,resource:getDimensions())
+	tiles['wall_corner_ne'] = love.graphics.newQuad(96,32,32,32,resource:getDimensions())
+	tiles['wall_corner_se'] = love.graphics.newQuad(64,32,32,32,resource:getDimensions())
+	tiles['floor_wood'] = love.graphics.newQuad(32,0,32,32,resource:getDimensions())
+	tiles['floor_cement'] = love.graphics.newQuad(0,0,32,32,resource:getDimensions())
+	tiles['cmt'] = love.graphics.newQuad(0,0,32,32,resource:getDimensions())
 end
 
 function generateTileProperties()
@@ -110,19 +116,20 @@ end
 function loadActorImages()
 	actors_images = {}
 	
-	actors_images['lisko'] = love.graphics.newQuad(40,0,20,20, resource:getDimensions())
-	actors_images['lisko_2'] = love.graphics.newQuad(60,0,20,20, resource:getDimensions())
-	actors_images['demon'] = love.graphics.newQuad(60,40,20,20, resource:getDimensions())
+	actors_images['lisko'] = love.graphics.newQuad(0,160,32,32, dynamics_resource:getDimensions())
+	actors_images['lisko_2'] = love.graphics.newQuad(32,160,32,32, dynamics_resource:getDimensions())
+	actors_images['demon'] = love.graphics.newQuad(0,192,32,32, dynamics_resource:getDimensions())
+  actors_images['demon_2'] = love.graphics.newQuad(32,192,32,32, dynamics_resource:getDimensions())
 	
 	-- neutral
-	actors_images['light'] = love.graphics.newQuad(40,40,20,20,resource:getDimensions())
+	-- actors_images['light'] = love.graphics.newQuad(40,40,20,20,resource:getDimensions())
 end
 
 function loadProjectileImages()
 	projectile_images = {}
 	
 	-- todo: use quads
-	projectile_images['puke'] = love.graphics.newImage('gfx/puke.png')
+	projectile_images['puke'] = love.graphics.newQuad(0,224,32,32, dynamics_resource:getDimensions())
 end
 
 function handleActors()
@@ -187,7 +194,7 @@ function createNewProjectile(of_type, coord_x, coord_y, direction)
 	projectiles[new_index]['direction'] = direction
 	projectiles[new_index]['x'] = coord_x
 	projectiles[new_index]['y'] = coord_y
-  projectiles[new_index]['weight'] = 5
+  projectiles[new_index]['weight'] = 3
   projectiles[new_index]['moving'] = 0
 	projectiles[new_index]['visual_x'] = coord_x * tile_size
 	projectiles[new_index]['visual_y'] = coord_y * tile_size
@@ -311,7 +318,7 @@ function playerCreate()
 	player['visual_y'] = 16 * tile_size
 	player['moving'] = 0
 	player['weight'] = 10
-	player['image'] = love.graphics.newImage('gfx/deeku.png')
+	player['image'] = love.graphics.newImage('gfx/CharacterSheet.png')
 	player['arrival'] = 'left'
 	player['cooldown'] = 0
 	player['direction'] = 'right'
@@ -326,17 +333,19 @@ function playerCreate()
 	player['frames'] = {}
 	--directional frames player
 	player['frames']['down'] = {}
-	player['frames']['down'][1] = love.graphics.newQuad(0,0,20,20, player['image']:getDimensions())
-	player['frames']['down'][2] = love.graphics.newQuad(20,0,20,20, player['image']:getDimensions())
+	player['frames']['down'][1] = love.graphics.newQuad(0,0,32,32, player['image']:getDimensions())
+	player['frames']['down'][2] = love.graphics.newQuad(32,0,32,32, player['image']:getDimensions())
+  player['frames']['down'][3] = love.graphics.newQuad(64,0,32,32, player['image']:getDimensions())
 	player['frames']['up'] = {}
-	player['frames']['up'][1] = love.graphics.newQuad(0,60,20,20, player['image']:getDimensions())
-	player['frames']['up'][2] = love.graphics.newQuad(20,60,20,20, player['image']:getDimensions())
+	player['frames']['up'][1] = love.graphics.newQuad(0,32,32,32, player['image']:getDimensions())
+	player['frames']['up'][2] = love.graphics.newQuad(32,32,32,32, player['image']:getDimensions())
+  player['frames']['up'][3] = love.graphics.newQuad(64,32,32,32, player['image']:getDimensions())
 	player['frames']['left'] = {}
-	player['frames']['left'][1] = love.graphics.newQuad(0,40,20,20, player['image']:getDimensions())
-	player['frames']['left'][2] = love.graphics.newQuad(20,40,20,20, player['image']:getDimensions())
+	player['frames']['left'][1] = love.graphics.newQuad(0,96,32,32, player['image']:getDimensions())
+	player['frames']['left'][2] = love.graphics.newQuad(32,96,32,32, player['image']:getDimensions())
 	player['frames']['right'] = {}
-	player['frames']['right'][1] = love.graphics.newQuad(0,20,20,20, player['image']:getDimensions())
-	player['frames']['right'][2] = love.graphics.newQuad(20,20,20,20, player['image']:getDimensions())
+	player['frames']['right'][1] = love.graphics.newQuad(0,64,32,32, player['image']:getDimensions())
+	player['frames']['right'][2] = love.graphics.newQuad(32,64,32,32, player['image']:getDimensions())
 	player['direction'] = 'down'
 	player['activeFrame'] = 1
 	
@@ -548,9 +557,8 @@ function drawSector(matrix)
 	-- draw a sector upon which körsy walketh. 20x20 tiles.
 	for x=1, table.getn(matrix) do
 		for y=1, table.getn(matrix[x]) do
-			
-			tile_type = map[x][y]
-			love.graphics.draw(resource, tiles[tile_type], x * tile_size, y * tile_size)
+			tile_type = map[x][y] -- get tile type
+      love.graphics.draw(resource, tiles[tile_type], x * tile_size, y * tile_size)
 		end
 	end
 end
@@ -1032,36 +1040,36 @@ end
 function drawActors()
 	for i=1, tablelength(actors) do
     -- todo: active frames/animations system for actors
-		love.graphics.draw(resource, actors_images[actors[i]['type']], actors[i]['visual_x'], actors[i]['visual_y'])
+		love.graphics.draw(dynamics_resource, actors_images[actors[i]['type']], actors[i]['visual_x'], actors[i]['visual_y'])
 		if actors[i]['visual_x'] < actors[i]['x'] * tile_size then
-			actors[i]['visual_x'] = actors[i]['visual_x'] + 2
+			actors[i]['visual_x'] = actors[i]['visual_x'] + 4
 		end
 		if actors[i]['visual_x'] > actors[i]['x'] * tile_size then
-			actors[i]['visual_x'] = actors[i]['visual_x'] - 2
+			actors[i]['visual_x'] = actors[i]['visual_x'] - 4
 		end
 		if actors[i]['visual_y'] < actors[i]['y'] * tile_size then
-			actors[i]['visual_y'] = actors[i]['visual_y'] + 2
+			actors[i]['visual_y'] = actors[i]['visual_y'] + 4
 		end
 		if actors[i]['visual_y'] > actors[i]['y'] * tile_size then
-			actors[i]['visual_y'] = actors[i]['visual_y'] - 2
+			actors[i]['visual_y'] = actors[i]['visual_y'] - 4
 		end
 	end
 end
 
 function drawProjectiles()
 	for i=1, tablelength(projectiles) do
-		love.graphics.draw(projectile_images[projectiles[i]['type']], projectiles[i]['visual_x'], projectiles[i]['visual_y'])
+		love.graphics.draw(dynamics_resource, projectile_images[projectiles[i]['type']], projectiles[i]['visual_x'], projectiles[i]['visual_y'])
     if projectiles[i]['visual_x'] < projectiles[i]['x'] * tile_size then
-			projectiles[i]['visual_x'] = projectiles[i]['visual_x'] + projectiles[i]['weight'] 
+			projectiles[i]['visual_x'] = projectiles[i]['visual_x'] + 12
 		end
 		if projectiles[i]['visual_x'] > projectiles[i]['x'] * tile_size then
-			projectiles[i]['visual_x'] = projectiles[i]['visual_x'] - projectiles[i]['weight']
+			projectiles[i]['visual_x'] = projectiles[i]['visual_x'] - 12
 		end
 		if projectiles[i]['visual_y'] < projectiles[i]['y'] * tile_size then
-			projectiles[i]['visual_y'] = projectiles[i]['visual_y'] + projectiles[i]['weight']
+			projectiles[i]['visual_y'] = projectiles[i]['visual_y'] + 12
 		end
 		if projectiles[i]['visual_y'] > projectiles[i]['y'] * tile_size then
-			projectiles[i]['visual_y'] = projectiles[i]['visual_y'] - projectiles[i]['weight']
+			projectiles[i]['visual_y'] = projectiles[i]['visual_y'] - 12
 		end
 	end
 end
@@ -1070,16 +1078,16 @@ function drawGame()
 	if intermission == 0 then
 		drawSector(start_map)
 		if player['visual_x'] < player['x'] * tile_size then
-			player['visual_x'] = player['visual_x'] + 2
+			player['visual_x'] = player['visual_x'] + 4
 		end
 		if player['visual_x'] > player['x'] * tile_size then
-			player['visual_x'] = player['visual_x'] - 2
+			player['visual_x'] = player['visual_x'] - 4
 		end
 		if player['visual_y'] < player['y'] * tile_size then
-			player['visual_y'] = player['visual_y'] + 2
+			player['visual_y'] = player['visual_y'] + 4
 		end
 		if player['visual_y'] > player['y'] * tile_size then
-			player['visual_y'] = player['visual_y'] - 2
+			player['visual_y'] = player['visual_y'] - 4
 		end
 		if player['moving'] < 0 then
 			player['activeFrame'] = 1
@@ -1096,7 +1104,7 @@ function drawUI()
 	-- draw ingame ui, hitpoints etc indicator
 	-- set global color vars depending on damage etc.
 	drawEffects()
-	love.graphics.rectangle("fill", 20, 400, player['hp'], 20)
+	love.graphics.rectangle("fill", 20, 700, player['hp'], 20)
 end
 
 function drawEffects()
