@@ -15,19 +15,28 @@ function love.load()
 	menu_music = love.audio.newSource('music/menu.ogg')
 	font = love.graphics.newFont('Avara.ttf', 40)
 	love.graphics.setFont(font)
-	
+
     -- global ingame vars
 	menu = 1
 	menu_items = {}
 	menu_items[1] = 'Rymyämään ->'
 	menu_items[2] = 'Nukkumaan -.-'
 	menuchoice = 1
+  menuCooldown = 0--time until menu option can be changed
+  menuWait = 0.3 --How often menu options can be changed
 	loading = 0
 	game = 0
 	intermission = 0
 	generateTileProperties()
 	tile_size = 20
-	
+	love.audio.setVolume( 0.25 )
+  splashSize = 0.45
+  splashIncreasing = true
+  splashMaxSize = 0.55
+  splashMinSize = 0.35
+  splashText = "Undertale but not shit"
+  
+
 	--global trigger etc. vars
 	gore_ticker = 0
 	
@@ -579,11 +588,14 @@ end
 
 function handleMenu()
 	menuJukebox()
+  splashTextIncrease()
 	genericControls()
-	if love.keyboard.isDown('down') then
-			menuchoice = menuchoice + 1
-	elseif love.keyboard.isDown('up') then
-		menuchoice = menuchoice - 1
+	if love.keyboard.isDown('down') and menuCooldown == 0 then
+    menuchoice = menuchoice + 1
+    menuCooldown = menuWait
+	elseif love.keyboard.isDown('up') and menuCooldown == 0 then
+		menuchoice = menuWait
+    menuCooldown = 0.3
 	end
 	if menuchoice > table.getn(menu_items) then
 		menuchoice = table.getn(menu_items)
@@ -859,6 +871,20 @@ function handleGame()
 	end
 end
 
+function splashTextIncrease()
+  if splashIncreasing then
+    splashSize = splashSize + 0.003
+  else
+    splashSize = splashSize - 0.003
+  end
+  if splashSize >= splashMaxSize then
+    splashIncreasing = false
+  end
+  if splashSize <= splashMinSize then
+    splashIncreasing = true
+  end
+end
+
 function drawMenu()
 	if menu == 1 then
 		menu_base_pos = {}
@@ -869,6 +895,7 @@ function drawMenu()
 			coord_y = menu_base_pos['y'] + (i * 100)
 			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y) 
 		end
+    love.graphics.print(splashText, 15, 370, 18.1, splashSize)
 		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 100))
 	elseif menu == 2 then
 		menu_base_pos = {}
@@ -979,6 +1006,8 @@ function love.draw()
 end
 
 function love.update(dt)
+  menuCooldown = math.max ( 0, menuCooldown - dt )
+  print(menuCooldown .. " seconds until menu can be moved")
 	if menu > 0 and game == 0 then
 		handleMenu()
 	else
