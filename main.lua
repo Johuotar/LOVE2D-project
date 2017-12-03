@@ -36,7 +36,8 @@ function love.load()
   splashIncreasing = true
   splashMaxSize = 0.55
   splashMinSize = 0.35
-  splashText = "Undertale but not shit"
+  splashText = "Default splashtext"--Default value
+  splashTable = {}
   
   --option variables
   --todo: save into an options file
@@ -45,6 +46,13 @@ function love.load()
   music_volume = 1 
   effects_volume = 1
   speech_volume = 1
+
+  --filesystem
+  for line in love.filesystem.lines("splashtexts.txt") do
+    table.insert(splashTable, line)
+  end
+  math.randomseed( os.time() )--seed for randomization from time
+  splashText = splashTable[math.random(1, #splashTable )]--number between 1 and last integer in table
 
 	--global trigger etc. vars
 	gore_ticker = 0
