@@ -5,6 +5,7 @@ require 'src/maps'
 require 'src/player'
 require 'src/ui'
 require 'src/sounds'
+require 'src/projectiles'
 
 function love.load()
   love.window.setMode(1024, 768)
