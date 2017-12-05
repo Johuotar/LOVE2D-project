@@ -1,14 +1,11 @@
 debug = true
--- utils
-function tablelength(T)
-  local count = 0
-  for _ in pairs(T) do count = count + 1 end
-  return count
-end
-function DIV(a,b)
-    return (a - a % b) / b
-end
--- end utils
+require 'src/utility'
+require 'src/assets'
+require 'src/maps'
+require 'src/player'
+require 'src/ui'
+require 'src/sounds'
+require 'src/projectiles'
 
 function love.load()
   love.window.setMode(1024, 768)
@@ -38,12 +35,12 @@ function love.load()
   splashMinSize = 0.35
   splashText = "Default splashtext"--Default value
   splashTable = {}
-  
+
   --option variables
   --todo: save into an options file
   master_volume = 0.3
   love.audio.setVolume( master_volume ) -- all other volume levels are up to maximum of master_volume
-  music_volume = 1 
+  music_volume = 1
   effects_volume = 1
   speech_volume = 1
 
@@ -56,88 +53,28 @@ function love.load()
 
 	--global trigger etc. vars
 	gore_ticker = 0
-	
+
 	--tiles
 	loadTileResource()
-	
+
 	--other image resources
 	loadActorImages()
 	loadProjectileImages()
-	
+
 	--audio
 	loadJukeboxSongs()
-	
+
 	--player
 	playerCreate()
-	
+
 	--actorbase
 	actors = {}
-	
+
 	--projectilebase
 	projectiles = {}
-	
+
 	--do init stuff
 	gamePreload()
-end
-
-function preloadGraphicsResources()
-  -- preload for handling all graphics resource files.
-  resource = love.graphics.newImage('gfx/Static_shit.png')
-  dynamics_resource = love.graphics.newImage('gfx/CharacterSheet.png')
-end
-
-function loadTileResource()
-	tiles = {}
-	
-	tiles['wall_updown'] = love.graphics.newQuad(32,32,32,32,resource:getDimensions())
-	tiles['wall_leftright'] = love.graphics.newQuad(0,32,32,32,resource:getDimensions())
-	tiles['door_leftright'] = love.graphics.newQuad(352,32,32,32,resource:getDimensions())
-	tiles['door_updown'] = love.graphics.newQuad(320,32,32,32,resource:getDimensions())
-	tiles['wall_corner_nw'] = love.graphics.newQuad(128,32,32,32,resource:getDimensions())
-	tiles['wall_corner_sw'] = love.graphics.newQuad(160,32,32,32,resource:getDimensions())
-	tiles['wall_corner_ne'] = love.graphics.newQuad(96,32,32,32,resource:getDimensions())
-	tiles['wall_corner_se'] = love.graphics.newQuad(64,32,32,32,resource:getDimensions())
-	tiles['floor_wood'] = love.graphics.newQuad(32,0,32,32,resource:getDimensions())
-	tiles['floor_cement'] = love.graphics.newQuad(0,0,32,32,resource:getDimensions())
-	tiles['cmt'] = love.graphics.newQuad(0,0,32,32,resource:getDimensions())
-end
-
-function generateTileProperties()
-	-- if a tile is not named here, it means the tile has no property and is considered WALKABLE.
-	tile_attrs = {}
-	tile_attrs['wall_updown'] = 'IMPASSABLE'
-	tile_attrs['wall_leftright'] = 'IMPASSABLE'
-	tile_attrs['wall_corner_ne'] = 'IMPASSABLE'
-	tile_attrs['wall_corner_nw'] = 'IMPASSABLE'
-	tile_attrs['wall_corner_se'] = 'IMPASSABLE'
-	tile_attrs['wall_corner_sw'] = 'IMPASSABLE'
-end
-
-function loadJukeboxSongs()
-	-- todo: something to read contents of jukebox directory
-	jukebox = {}
-	
-	jukebox[1] = love.audio.newSource('music/jukebox/sharkest.ogg')
-	jukebox[2] = love.audio.newSource('music/jukebox/urut.ogg')
-end
-
-function loadActorImages()
-	actors_images = {}
-	
-	actors_images['lisko'] = love.graphics.newQuad(0,160,32,32, dynamics_resource:getDimensions())
-	actors_images['lisko_2'] = love.graphics.newQuad(32,160,32,32, dynamics_resource:getDimensions())
-	actors_images['demon'] = love.graphics.newQuad(0,192,32,32, dynamics_resource:getDimensions())
-  actors_images['demon_2'] = love.graphics.newQuad(32,192,32,32, dynamics_resource:getDimensions())
-	
-	-- neutral
-	-- actors_images['light'] = love.graphics.newQuad(40,40,20,20,resource:getDimensions())
-end
-
-function loadProjectileImages()
-	projectile_images = {}
-	
-	-- todo: use quads
-	projectile_images['puke'] = love.graphics.newQuad(0,224,32,32, dynamics_resource:getDimensions())
 end
 
 function handleActors()
@@ -185,7 +122,7 @@ function createNewActor(of_type, coord_x, coord_y, weight)
 	actors[new_index]['weight'] = weight
 	actors[new_index]['destroyed'] = false
   actors[new_index]['status'] = 'normal'
-	
+
 	-- variables that depend on actor type
 	-- lisko or demon: spiritual enemies. No damage gained from physical attacks
 	if of_type == 'lisko' or of_type == 'demon' then
@@ -239,7 +176,7 @@ end
 
 function runActorLogic(actor)
 	--provide with index
-	
+
 	--lisko: sprawl around randomly!
 	if actors[actor]['type'] == 'lisko' then
     if actors[actor]['status'] == 'alert' then
@@ -271,7 +208,7 @@ function runActorLogic(actor)
       end
     end
 		actors[actor]['moving'] = actors[actor]['moving'] - 1
-    
+
     -- set chasing status if player is too near
     if player['x'] - actors[actor]['x'] < 5 and player['x'] - actors[actor]['x'] > -5 then
       if player['y'] - actors[actor]['y'] < 5 and player['y'] - actors[actor]['y'] > -5 then
@@ -288,112 +225,15 @@ function runActorLogic(actor)
 		-- demon glides around
 		dir_x = love.math.random(-5, 5)
 		dir_y = love.math.random(-5, 5)
-		
+
 		actor_move(actor, actors[actor]['x'] + dir_x, actors[actor]['y'] + dir_y)
-		
+
 		actors[actor]['moving'] = actors[actor]['moving'] - 1
     if actors[actor]['hp'] < 1 then
       actors[actor]['destroyed'] = true
     end
 	end
 
-end
-
-function playSoundEffect(effect)
-  -- set volume level for clip and play it.
-  effect:stop()
-  effect:setVolume(effects_volume * master_volume)
-  effect:play()
-end
-
-function playTrack(track)
-  --set volume level for track and play it.
-  track:setVolume(music_volume * master_volume)
-  track:play()
-end
-
-function playSpeech(clip)
-  -- speech clips modified by speech sound volume
-  clip:setVolume(speech_volume * master_volume)
-  clip:play()
-end
-
-function playerCreate()
-	player = {}
-	player['x'] = 1
-	player['y'] = 16
-	player['visual_x'] = 1 * tile_size
-	player['visual_y'] = 16 * tile_size
-	player['moving'] = 0
-	player['weight'] = 10
-	player['image'] = love.graphics.newImage('gfx/CharacterSheet.png')
-	player['arrival'] = 'left'
-	player['cooldown'] = 0
-	player['direction'] = 'right'
-	
-	--stats player
-	player['hp'] = 100
-	player['max_hp'] = 100
-	player['fatigue'] = 0
-	player['promilles'] = 0
-	player['equipped'] = 'puke'
-	
-	player['frames'] = {}
-	--directional frames player
-	player['frames']['down'] = {}
-	player['frames']['down'][1] = love.graphics.newQuad(0,0,32,32, player['image']:getDimensions())
-	player['frames']['down'][2] = love.graphics.newQuad(32,0,32,32, player['image']:getDimensions())
-  player['frames']['down'][3] = love.graphics.newQuad(64,0,32,32, player['image']:getDimensions())
-	player['frames']['up'] = {}
-	player['frames']['up'][1] = love.graphics.newQuad(0,32,32,32, player['image']:getDimensions())
-	player['frames']['up'][2] = love.graphics.newQuad(32,32,32,32, player['image']:getDimensions())
-  player['frames']['up'][3] = love.graphics.newQuad(64,32,32,32, player['image']:getDimensions())
-	player['frames']['left'] = {}
-	player['frames']['left'][1] = love.graphics.newQuad(0,96,32,32, player['image']:getDimensions())
-	player['frames']['left'][2] = love.graphics.newQuad(32,96,32,32, player['image']:getDimensions())
-	player['frames']['right'] = {}
-	player['frames']['right'][1] = love.graphics.newQuad(0,64,32,32, player['image']:getDimensions())
-	player['frames']['right'][2] = love.graphics.newQuad(32,64,32,32, player['image']:getDimensions())
-	player['direction'] = 'down'
-	player['activeFrame'] = 1
-	
-	--generic sound effects
-	player['grunts'] = {}
-	player['grunts'][1] = love.audio.newSource('sfx/zombie-1.wav', 'static')
-	player['grunts'][2] = love.audio.newSource('sfx/zombie-2.wav', 'static')
-	player['grunts'][3] = love.audio.newSource('sfx/zombie-3.wav', 'static')
-  
-  player['attacks'] = {}
-  player['attacks']['puke'] = love.audio.newSource('sfx/zombie-8.wav', 'static')
-  player['attacks']['puke']:setPitch(1.5)
-end
-
-function playerArrive()
-	if player['arrival'] == 'left' then
-		player['x'] = 1
-		player['visual_x'] = 1 * tile_size
-	elseif player['arrival'] == 'right' then
-		player['x'] = tablelength(start_map)
-		player['visual_x'] = 32 * tile_size
-	elseif player['arrival'] == 'up' then
-		player['y'] = 1
-		player['visual_y'] = 1 * tile_size
-	elseif player['arrival'] == 'down' then
-		player['y'] = tablelength(start_map[1]) --todo: fix map variable name
-		player['visual_y'] = tablelength(start_map[1]) * tile_size
-	end
-end
-
-function playerUseItem()
-	-- launch a player item use depending on chosen item.
-	if player['cooldown'] < 1 then
-		if player['equipped'] == 'puke' then
-			-- create a puke ball
-			createNewProjectile('puke', player['x'], player['y'], player['direction'])
-      playSoundEffect(player['attacks']['puke'])
-      player['cooldown'] = 25
-		end
-	end
 end
 
 function actorGeneration()
@@ -408,156 +248,6 @@ function actorGeneration()
 	end
 	for i=1, demonis do
 		createNewActor('demon', love.math.random(24),love.math.random(12), 50)
-	end
-end
-
-function generateMap()
-	-- generate a map randomly.
-	tile_type = love.math.random(100)
-	-- todo: base types affect algorithms and map layouts
-	if tile_type < 50 then
-		base_type = 'cmt'
-	else
-		base_type = 'floor_wood'
-	end
-	
-	map = {}
-	-- todo: maybe use short codes or smth to represent tile types...
-	for x=1, 32 do
-		map[x] = {}
-		for y=1, 16 do
-			map[x][y] = base_type
-		end
-	end
-	
-	-- roll algorithms based on logic
-	-- buildings etc.
-	if base_type == 'cmt' then
-		-- outside cement world: generate a certain amount of houses of certain sizes
-		house_amounts = love.math.random(10)
-		if house_amounts > 1 then
-			for i=1, house_amounts do
-				houseAlgorithm()
-			end
-		end
-	end
-	
-	--close off 1-2 map borders with walls. never close arrival direction
-	closed = love.math.random(2)
-	for i=1, closed do
-		dir = love.math.random(4)
-		if dir == 1 and player['arrival'] ~= 'left' then
-			--left side
-			for y=1, tablelength(map[1]) do
-				map[1][y] = 'wall_updown'
-			end
-		end
-		if dir == 2 and player['arrival'] ~= 'right' then
-			--right side
-			for y=1, tablelength(map[tablelength(map)]) do
-				map[tablelength(map)][y] = 'wall_updown'
-			end
-		end
-		if dir == 3 and player['arrival'] ~= 'up' then
-			--top
-			for x=1, tablelength(map) do
-				map[x][1] = 'wall_leftright'
-			end
-		end
-		if dir == 4 and player['arrival'] ~= 'down' then
-			--bottom
-			for x=1, tablelength(map) do
-				map[x][tablelength(map[1])] = 'wall_leftright'
-			end
-		end
-	end
-	
-	return map
-end
-
-function houseAlgorithm()
-	-- generate a house with a random size. Keep calling itself until successful.
-	
-	-- find start point that is empty space not in a corner. Check that start coords + size is not bigger than map...
-	-- and is not overlapping with something else, like another house.
-	-- todo: make a metamap that keeps track of what has been inserted where
-	
-	-- start point
-	start_x = love.math.random(32)
-	start_y = love.math.random(16)
-	
-	-- size from 4 to 8
-	size_x = love.math.random(4,8)
-	size_y = love.math.random(4,8)
-
-	for x=1, tablelength(map) do
-		if start_x + size_x > tablelength(map) then
-			houseAlgorithm()
-		end
-		for y=1, tablelength(map[x]) do
-			if start_y + size_y > tablelength(map[x]) then
-				houseAlgorithm()
-			end
-		end
-	end
-	
-	if start_x ~= 1 and start_x ~= 32 then
-		if start_y ~= 1 and start_y ~= 16 then
-			if tile_attrs[map[start_x][start_y]] ~= 'IMPASSABLE' then
-				
-				
-				-- create wooden floor
-				for x=0, size_x do
-					for y=0, size_y do
-						map[start_x+x][start_y+y] = 'floor_wood'
-					end
-				end
-				
-				-- create walls
-				-- top
-				for x=0, size_x do
-					if x == 0 then
-						map[start_x][start_y] = 'wall_corner_nw'
-					else
-						map[start_x+x][start_y] = 'wall_leftright'
-					end
-				end
-				--left
-				for y=0, size_y do
-					if y == 0 then
-						map[start_x][start_y] = 'wall_corner_nw'
-					else
-						map[start_x][start_y+y] = 'wall_updown'
-					end
-				end
-				--right
-				for y=0, size_y do
-					if y == 0 then
-						map[start_x+size_x][start_y] = 'wall_corner_ne'
-					else
-						map[start_x+size_x][start_y+y] = 'wall_updown'
-					end
-				end
-				--bottom + door
-				doorspot = DIV(size_x, 2)
-				for x=0, size_x do
-					if x == 0 then
-						map[start_x][start_y+size_y] = 'wall_corner_sw'
-					elseif x == doorspot then
-						map[start_x+doorspot][start_y+size_y] = 'door_leftright'
-					elseif x == size_x then
-						map[start_x+size_x][start_y+size_y] = 'wall_corner_se'
-					else
-						map[start_x+x][start_y+size_y] = 'wall_leftright'
-					end
-				end
-				
-			end
-		else
-			houseAlgorithm()
-		end
-	else
-		houseAlgorithm()
 	end
 end
 
@@ -579,179 +269,6 @@ function genericControls()
 	end
 end
 
-function playerGrunt()
-    -- todo: generalize, AKA should be playerSoundFX(), not just for grunts
-	-- play a grunt sound from player, randomized with random pitch.
-	for i=1, tablelength(player['grunts']) do
-		if player['grunts'][i]:isPlaying() then
-			player['grunts'][i]:stop()
-		end
-	end
-	grunt = love.math.random(tablelength(player['grunts']))
-	pitch = love.math.random()
-	if pitch < 0.5 then
-		pitch = 0.5
-	end
-	
-	player['grunts'][grunt]:setPitch(pitch)
-	playSoundEffect(player['grunts'][grunt])
-end
-
-function menuJukebox()
-	for i=1, tablelength(jukebox) do
-		if jukebox[i]:isPlaying() == true then
-			jukebox[i]:stop()
-		end
-	end
-	playTrack(menu_music)
-	menu_music:setLooping(true)
-end
-
-function gameJukebox()
-	-- disable menu music if playing
-	if menu_music:isPlaying() == true then
-		menu_music:stop()
-	end
-	
-	ended = true
-	
-	-- dont do anything while any jukebox or event song is playing
-	for i=1, tablelength(jukebox) do
-		if jukebox[i]:isPlaying() == true then
-			ended = false
-		end
-	end
-	if ended == true then
-		shuffle = love.math.random(tablelength(jukebox))
-		playTrack(jukebox[shuffle])
-	end
-end
-
-function handleMenu()
-	menuJukebox()
-  splashTextIncrease()
-	genericControls()
-	if love.keyboard.isDown('down') and menuCooldown == 0 then
-    menuchoice = menuchoice + 1
-    menuCooldown = menuWait
-	elseif love.keyboard.isDown('up') and menuCooldown == 0 then
-		menuchoice = menuchoice - 1
-    menuCooldown = menuWait
-	end
-	if menuchoice > table.getn(menu_items) then
-		menuchoice = table.getn(menu_items)
-	elseif menuchoice < 1 then
-		menuchoice = 1
-	end
-	-- main menu
-	if menu == 1 then
-		
-		if love.keyboard.isDown('return') and menuCooldown == 0 then
-			if menuchoice == 1 then
-				game = 1
-				menu = 0
-      elseif menuchoice == 2 then
-        menuchoices = {}
-        menu_items[1] = 'Master'
-        menu_items[2] = 'Effekts'
-        menu_items[3] = 'Karaoke'
-        menu_items[4] = 'Sammallus'
-        menu_items[5] = 'POIS! >:o'
-        menu = 99
-			elseif menuchoice == 3 then
-				love.event.quit()
-			end
-		end
-	end
-	-- game over menu
-	if menu == 2 then
-		if love.keyboard.isDown('return') then
-			if menuchoice == 1 then
-				gamePreload()
-				playerCreate()
-				game = 1
-				menu = 0
-			elseif menuchoice == 2 then
-				love.graphics.setColor(255,255,255)
-				game = 0
-				menu = 1
-        menuCooldown = menuWait
-			elseif menuchoice == 3 then
-				love.event.quit()
-			end
-		end
-  end
-  -- options menu
-	if menu == 99 then
-    if menuCooldown < 0.1 then
-      if love.keyboard.isDown('left') then
-        if menuchoice == 1 then
-          -- master volume lower
-          if master_volume > 0 then
-            master_volume = master_volume - 0.1
-            if master_volume == 0 then
-              love.audio.setVolume(0)
-            else
-              love.audio.setVolume(master_volume)
-            end
-          end
-        elseif menuchoice == 2 then
-          -- effects volume lower
-          if effects_volume > 0.1 then
-            effects_volume = effects_volume - 0.1
-          end
-        elseif menuchoice == 3 then
-          -- music volume lower
-          if music_volume > 0.1 then
-            music_volume = music_volume - 0.1
-          end
-        elseif menuchoice == 4 then
-          -- speech volume lower
-          if speech_volume > 0.1 then
-            speech_volume = speech_volume - 0.1
-          end
-        end
-        menuCooldown = 0.3
-      elseif love.keyboard.isDown('right') then
-        if menuchoice == 1 then
-          -- master volume higher
-          if master_volume < 1 then
-            master_volume = master_volume + 0.1
-            love.audio.setVolume(master_volume)
-          end
-        elseif menuchoice == 2 then
-          -- effects volume higher
-          if effects_volume < 1 then
-            effects_volume = effects_volume + 0.1
-          end
-        elseif menuchoice == 3 then
-          -- music volume higher
-          if music_volume < 1 then
-            music_volume = music_volume + 0.1
-          end
-        elseif menuchoice == 4 then
-          -- speech volume higher
-          if speech_volume < 1 then
-            speech_volume = speech_volume + 0.1
-          end
-        end
-        menuCooldown = 0.3
-      elseif love.keyboard.isDown('return') then
-        if menuchoice == 5 then
-          menu_items = {}
-          menu_items[1] = 'Rymyämään ->'
-          menu_items[2] = 'Vääntämään :F'
-          menu_items[3] = 'Nukkumaan -.-'
-          menuchoice = 1
-          menuCooldown = menuWait
-          menu = 1
-        end
-      end
-    end
-  end
-	
-end
-
 function gamePreload()
 	start_map = generateMap()
 	actorGeneration()
@@ -769,76 +286,18 @@ function goreVisuals()
 	end
 end
 
-function applyPlayerEffect(effect, context_variable)
-	-- apply any kind of effect based on name on player.
-	if effect == "takeDamage" then
-		-- todo: apply sound effect, color splash and shit
-		gore_ticker = 20 -- set splash effect in motion
-		alterPlayerStat("hp", context_variable)
-		playerGrunt()
-	end
-end
-
-function alterPlayerStat(stat_name, amount)
-	-- alter a player stat by an amount. Use minus value to subtract
-	player[stat_name] = player[stat_name] + amount
-	-- todo: need other operations to handle?
-end
-
-function player_move(coord_x, coord_y, map)
-	-- check where player is about to move, allow or disallow move based on that and resolve effects
-	-- apply speed / delay factor to movement
-	-- can be used for teleport
-	
-	-- are we still moving?
-	if player['moving'] < 1 then
-	
-		-- are we inside bounds?
-		if coord_x > 0 and coord_x <= tablelength(map) then
-			
-			for x=1, tablelength(map) do
-				if coord_y > 0 and coord_y <= tablelength(map[x]) then
-	
-					-- tile in question can be moved on?
-					if tile_attrs[map[coord_x][coord_y]] == nil then
-						-- move. set us on path
-						player['moving'] = 10
-						player['x'] = coord_x
-						player['y'] = coord_y
-						player['activeFrame'] = 2
-					end
-				elseif coord_y > tablelength(map[x]) and player['arrival'] ~= 'down' then
-					player['arrival'] = 'up'
-					intermission = 1
-				elseif coord_y < 1 and player['arrival'] ~= 'up' then
-					player['arrival'] = 'down'
-					intermission = 1
-				end
-
-			end
-		-- arrival direction determiningin, always trigger intermission
-		elseif coord_x > tablelength(map) and player['arrival'] ~= 'right' then
-			player['arrival'] = 'left'
-			intermission = 1
-		elseif coord_x < 1 and player['arrival'] ~= 'left' then
-			player['arrival'] = 'right'
-			intermission = 1
-		end
-	end
-end
-
 function actor_move(actor, coord_x, coord_y)
 	-- mostly same as player, except for targeted actor (target with index)
-	
+
 	-- are we still moving?
 	if actors[actor]['moving'] < 1 then
-	
+
 		-- are we inside bounds?
 		if coord_x > 0 and coord_x <= tablelength(map) then
-			
+
 			for x=1, tablelength(map) do
 				if coord_y > 0 and coord_y <= tablelength(map[x]) then
-	
+
 					-- tile in question can be moved on?
 					if tile_attrs[map[coord_x][coord_y]] == nil then
 						overlap = false
@@ -858,37 +317,8 @@ function actor_move(actor, coord_x, coord_y)
 				end
 
 			end
-			
-		end
-	end
-end
 
-function projectile_move(projectile, coord_x, coord_y)
-	-- movement for projectiles. Major difference is that projectiles are removed immediately when they are "stuck"
-	-- are we inside bounds?
-	if coord_x > 0 and coord_x <= tablelength(map) then
-		
-		for x=1, tablelength(map) do
-			if coord_y > 0 and coord_y <= tablelength(map[x]) then
-        -- not moving anymore?
-        if projectiles[projectile]['moving'] < 1 then
-          -- tile in question can be moved on?
-          if tile_attrs[map[coord_x][coord_y]] == nil then
-            -- move. set it on path
-            projectiles[projectile]['moving'] = projectiles[projectile]['weight']
-            projectiles[projectile]['x'] = coord_x
-            projectiles[projectile]['y'] = coord_y
-          else
-            projectiles[projectile]['destroyed'] = true
-          end
-        end
-			else
-        projectiles[projectile]['destroyed'] = true
-      end
-    end
-	else
-		-- destroy projectile if it considered moving out of bounds.
-		projectiles[projectile]['destroyed'] = true
+		end
 	end
 end
 
@@ -902,37 +332,6 @@ function checkCollisionWithPlayer(actor)
 	end
 end
 
-function checkProjectileCollision(projectile)
-	-- if collision between projectile and anything, do something
-	-- actors
-	for i=1, tablelength(actors) do
-		if projectiles[projectile]['x'] == actors[i]['x'] and projectiles[projectile]['y'] == actors[i]['y'] then
-			if projectiles[projectile]['type'] == 'puke' then
-        --puke does a lot of spiritual damage but only neglible physical damage
-        -- todo: apply both once separate stats are made??
-        spiritual_damage = actors[i]['spiritual_factor'] * 25
-        physical_damage = actors[i]['physical_factor'] * 1
-        if spiritual_damage > physical_damage then
-          actors[i]['hp'] = actors[i]['hp'] - spiritual_damage
-        else
-          actors[i]['hp'] = actors[i]['hp'] - physical_damage
-        end
-        setProjectileToBeRemoved(projectile)
-			end
-		end
-	end
-	
-	-- player
-	
-	-- other projectiles
-end
-
-function checkPlayerStatus()
-	-- check and apply whatever persistent statuses player has. Also check death.
-	if player['hp'] < 1 then
-		gameOver()
-	end
-end
 
 function gameOver()
 	--game over, my dude, game over! You lose. Transition to end screen and tell player to f off
@@ -941,29 +340,6 @@ function gameOver()
 	menu_items[3] = 'PAINU VITHUU :o'
 	menu = 2
 	game = 0
-end
-
-function playerControls()
-	-- todo: Something so you can bind keys
-	if love.keyboard.isDown('down') then
-		player_move(player['x'], player['y'] + 1, start_map)
-		player['direction'] = 'down'
-	elseif love.keyboard.isDown('up') then
-		player_move(player['x'], player['y'] - 1, start_map)
-		player['direction'] = 'up'
-	elseif love.keyboard.isDown('left') then
-		player_move(player['x'] - 1, player['y'], start_map)
-		player['direction'] = 'left'
-	elseif love.keyboard.isDown('right') then
-		player_move(player['x'] + 1, player['y'], start_map)
-		player['direction'] = 'right'
-	end
-	
-	-- attack/use active item
-	if love.keyboard.isDown('space') then
-		-- todo: check what item is active
-		playerUseItem()
-	end
 end
 
 --main game loop
@@ -987,64 +363,6 @@ function handleGame()
 	end
 end
 
-function splashTextIncrease()
-  if splashIncreasing then
-    splashSize = splashSize + 0.003
-  else
-    splashSize = splashSize - 0.003
-  end
-  if splashSize >= splashMaxSize then
-    splashIncreasing = false
-  end
-  if splashSize <= splashMinSize then
-    splashIncreasing = true
-  end
-end
-
-function drawMenu()
-	if menu == 1 then
-		menu_base_pos = {}
-		menu_base_pos['x'] = 450
-		menu_base_pos['y'] = 150
-		love.graphics.draw(menu_bg, 0, 0)
-		for i=1, tablelength(menu_items) do
-			coord_y = menu_base_pos['y'] + (i * 80)
-			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y) 
-		end
-    love.graphics.print(splashText, 15, 370, 18.1, splashSize)
-		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 80))
-	elseif menu == 2 then
-		menu_base_pos = {}
-		menu_base_pos['x'] = 250
-		menu_base_pos['y'] = 150
-		for i=1, tablelength(menu_items) do
-			coord_y = menu_base_pos['y'] + (i * 80)
-			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y) 
-		end
-		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 80))
-	elseif menu == 99 then
-    menu_base_pos = {}
-		menu_base_pos['x'] = 100
-		menu_base_pos['y'] = 20
-		for i=1, tablelength(menu_items) do
-			coord_y = menu_base_pos['y'] + (i * 50)
-      bar_start_x = 350
-      bar_start_y = coord_y + 15
-      if i==1 then
-        love.graphics.rectangle("fill", bar_start_x, bar_start_y, master_volume * 100, 20)
-      elseif i==2 then
-        love.graphics.rectangle("fill", bar_start_x, bar_start_y, effects_volume * 100, 20)
-      elseif i==3 then
-        love.graphics.rectangle("fill", bar_start_x, bar_start_y, music_volume * 100, 20)
-      elseif i==4 then
-        love.graphics.rectangle("fill", bar_start_x, bar_start_y, speech_volume * 100, 20)
-      end
-			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y) 
-		end
-		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 50))
-  end
-end
-
 function drawActors()
 	for i=1, tablelength(actors) do
     -- todo: active frames/animations system for actors
@@ -1060,24 +378,6 @@ function drawActors()
 		end
 		if actors[i]['visual_y'] > actors[i]['y'] * tile_size then
 			actors[i]['visual_y'] = actors[i]['visual_y'] - 4
-		end
-	end
-end
-
-function drawProjectiles()
-	for i=1, tablelength(projectiles) do
-		love.graphics.draw(dynamics_resource, projectile_images[projectiles[i]['type']], projectiles[i]['visual_x'], projectiles[i]['visual_y'])
-    if projectiles[i]['visual_x'] < projectiles[i]['x'] * tile_size then
-			projectiles[i]['visual_x'] = projectiles[i]['visual_x'] + 12
-		end
-		if projectiles[i]['visual_x'] > projectiles[i]['x'] * tile_size then
-			projectiles[i]['visual_x'] = projectiles[i]['visual_x'] - 12
-		end
-		if projectiles[i]['visual_y'] < projectiles[i]['y'] * tile_size then
-			projectiles[i]['visual_y'] = projectiles[i]['visual_y'] + 12
-		end
-		if projectiles[i]['visual_y'] > projectiles[i]['y'] * tile_size then
-			projectiles[i]['visual_y'] = projectiles[i]['visual_y'] - 12
 		end
 	end
 end
@@ -1108,23 +408,16 @@ function drawGame()
 	end
 end
 
-function drawUI()
-	-- draw ingame ui, hitpoints etc indicator
-	-- set global color vars depending on damage etc.
-	drawEffects()
-	love.graphics.rectangle("fill", 20, 700, player['hp'], 20)
-end
-
 function drawEffects()
 	-- visual effects, hallucinations etc. miscellanous stuff
-	
+
 	-- damage color "tint" - screen goes gray in accordance with damage amount
 	damage_factor = 155 + player['hp']
 	if player['hp'] < 25 then
 		damage_factor = damage_factor - 100
 	end
 	love.graphics.setColor(damage_factor,damage_factor,damage_factor)
-	
+
 	-- hit splash
 	if gore_ticker > 0 then
 		goreVisuals()
@@ -1148,5 +441,4 @@ function love.update(dt)
 	else
 		handleGame()
 	end
-	
 end
