@@ -2,7 +2,6 @@
 Functions for UI & menu.
 --]]
 
-
 function splashTextIncrease()
   if splashIncreasing then
     splashSize = splashSize + 0.003
@@ -33,6 +32,7 @@ function drawMenu()
 		menu_base_pos = {}
 		menu_base_pos['x'] = 250
 		menu_base_pos['y'] = 150
+    drawPlayerScore()
 		for i=1, tablelength(menu_items) do
 			coord_y = menu_base_pos['y'] + (i * 80)
 			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y)
@@ -66,8 +66,13 @@ function drawUI()
 	-- set global color vars depending on damage etc.
 	drawEffects()
 	love.graphics.rectangle("fill", 20, 700, player['hp'], 20)
+  drawPlayerScore()
 end
 
+-- Draws the player score on the screen
+function drawPlayerScore()
+  love.graphics.printf( playerScore, 20, 650, 50, "left" )
+end
 
 function handleMenu()
 	menuJukebox()

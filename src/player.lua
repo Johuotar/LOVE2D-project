@@ -18,6 +18,15 @@ function alterPlayerStat(stat_name, amount)
 	-- todo: need other operations to handle?
 end
 
+-- Increment playerScore by given amount.
+function incrementPlayerScore(amount)
+	playerScore = playerScore + amount
+end
+-- Resets playerScore to initial value
+function resetPlayerScore()
+	playerScore = 0
+end
+
 function player_move(coord_x, coord_y, map)
 	-- check where player is about to move, allow or disallow move based on that and resolve effects
 	-- apply speed / delay factor to movement
