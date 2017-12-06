@@ -181,7 +181,7 @@ function runActorLogic(actor)
 		actors[actor]['moving'] = actors[actor]['moving'] - 1
     if actors[actor]['hp'] < 1 then
       actors[actor]['destroyed'] = true
-      incrementPlayerScore(1)
+      incrementPlayerScore(5)
     end
 	end
 
