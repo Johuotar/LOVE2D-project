@@ -71,7 +71,7 @@ end
 
 -- Draws the player score on the screen
 function drawPlayerScore()
-  love.graphics.printf( playerScore, 20, 650, 50, "left" )
+  love.graphics.printf( playerScore, 20, 650, 100, "left" )
 end
 
 function handleMenu()
