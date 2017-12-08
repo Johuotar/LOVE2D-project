@@ -99,6 +99,7 @@ function createNewActor(of_type, coord_x, coord_y, weight)
 	actors[new_index]['destroyed'] = false
   actors[new_index]['status'] = 'normal'
   actors[new_index]['frame'] = 1
+  actors[new_index]['animation_delay'] = 15
 
 	-- variables that depend on actor type
 	-- lisko or demon: spiritual enemies. No damage gained from physical attacks
@@ -324,9 +325,13 @@ function drawActors()
     tybe = actors[i]['type']
     frame = actors[i]['frame']
 		love.graphics.draw(dynamics_resource, actors_images[tybe][frame], actors[i]['visual_x'], actors[i]['visual_y'])
-    actors[i]['frame'] = actors[i]['frame'] + 1
-    if actors[i]['frame'] > tablelength(actors_images[tybe]) then
-      actors[i]['frame'] = 1
+    actors[i]['animation_delay'] = actors[i]['animation_delay'] - 1
+    if actors[i]['animation_delay'] < 1 then
+      actors[i]['frame'] = actors[i]['frame'] + 1
+      if actors[i]['frame'] > tablelength(actors_images[tybe]) then
+        actors[i]['frame'] = 1
+      end
+      actors[i]['animation_delay'] = 15
     end
     
 		if actors[i]['visual_x'] < actors[i]['x'] * tile_size then
