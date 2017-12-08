@@ -46,10 +46,13 @@ end
 function loadActorImages()
 	actors_images = {}
 
-	actors_images['lisko'] = love.graphics.newQuad(0,160,32,32, dynamics_resource:getDimensions())
-	actors_images['lisko_2'] = love.graphics.newQuad(32,160,32,32, dynamics_resource:getDimensions())
-	actors_images['demon'] = love.graphics.newQuad(0,192,32,32, dynamics_resource:getDimensions())
-  actors_images['demon_2'] = love.graphics.newQuad(32,192,32,32, dynamics_resource:getDimensions())
+  actors_images['lisko'] = {}
+	actors_images['lisko'][1] = love.graphics.newQuad(0,160,32,32, dynamics_resource:getDimensions())
+	actors_images['lisko'][2] = love.graphics.newQuad(32,160,32,32, dynamics_resource:getDimensions())
+  
+  actors_images['demon'] = {}
+	actors_images['demon'][1] = love.graphics.newQuad(0,192,32,32, dynamics_resource:getDimensions())
+  actors_images['demon'][2] = love.graphics.newQuad(32,192,32,32, dynamics_resource:getDimensions())
 
 	-- neutral
 	-- actors_images['light'] = love.graphics.newQuad(40,40,20,20,resource:getDimensions())
