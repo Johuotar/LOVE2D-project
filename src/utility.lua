@@ -11,3 +11,7 @@ end
 function DIV(a,b)
   return (a - a % b) / b
 end
+
+function setContains(set, key)
+    return set[key] ~= nil
+end

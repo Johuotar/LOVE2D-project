@@ -1,3 +1,4 @@
 used 3rd party assets listed with their licenses
 
 artisticdude - https://opengameart.org/content/zombies-sound-pack - CC0
+Jute - https://opengameart.org/content/foot-walking-step-sounds-on-stone-water-snow-wood-and-dirt - GPL3.0/GPL2.0

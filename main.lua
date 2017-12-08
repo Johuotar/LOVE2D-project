@@ -308,8 +308,12 @@ function handleGame()
 		handleActors()
 		handleProjectiles()
 		playerControls()
-		player['moving'] = player['moving'] - 1
-    player['cooldown'] = player['cooldown'] - 1
+    if player['moving'] > 0 then
+      player['moving'] = player['moving'] - 1
+    end
+    if player['cooldown'] > 0 then
+      player['cooldown'] = player['cooldown'] - 1
+    end
 	--loading a new area
 	else
 		start_map = generateMap() --todo: change map variable name
@@ -364,13 +368,33 @@ function drawGame()
 		if player['visual_y'] > player['y'] * tile_size then
 			player['visual_y'] = player['visual_y'] - 4
 		end
-		if player['moving'] < 0 then
-			player['activeFrame'] = 1
-		end
+		if player['moving'] > 1 then
+      player['walk_delay'] = player['walk_delay'] - 1
+    end
+    
 		drawActors()
 		drawProjectiles()
 		direction = player['direction']
-		activeFrame = player['activeFrame']
+
+    if player['walk_delay'] < 1 then
+      player['activeFrame'] = player['activeFrame'] + 1
+      if player['activeFrame'] > tablelength(player['frames'][direction]) then
+        player['activeFrame'] = 1
+      end
+      player['walk_delay'] = 10
+      
+      -- play footstep sound if tile type has sound effect loaded
+      tile_type = start_map[player['x']][player['y']]
+      if setContains(player['footsteps'], tile_type) then
+        -- Only on every second frame change
+        if player['activeFrame'] % 2 == 0 then
+          random_pick = love.math.random(1, tablelength(player['footsteps'][tile_type]))
+          player['footsteps'][tile_type][random_pick]:stop()
+          player['footsteps'][tile_type][random_pick]:play()
+        end
+      end
+    end
+    activeFrame = player['activeFrame']
 		love.graphics.draw(player['image'], player['frames'][direction][activeFrame], player['visual_x'], player['visual_y'])
 	end
 end

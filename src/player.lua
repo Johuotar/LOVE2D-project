@@ -47,7 +47,6 @@ function player_move(coord_x, coord_y, map)
 						player['moving'] = 10
 						player['x'] = coord_x
 						player['y'] = coord_y
-						player['activeFrame'] = 2
 					end
 				elseif coord_y > tablelength(map[x]) and player['arrival'] ~= 'down' then
 					player['arrival'] = 'up'
@@ -94,26 +93,52 @@ function playerCreate()
 	player['frames']['down'] = {}
 	player['frames']['down'][1] = love.graphics.newQuad(0,0,32,32, player['image']:getDimensions())
 	player['frames']['down'][2] = love.graphics.newQuad(32,0,32,32, player['image']:getDimensions())
-  player['frames']['down'][3] = love.graphics.newQuad(64,0,32,32, player['image']:getDimensions())
+  player['frames']['down'][3] = love.graphics.newQuad(0,0,32,32, player['image']:getDimensions())
+  player['frames']['down'][4] = love.graphics.newQuad(64,0,32,32, player['image']:getDimensions())
 	player['frames']['up'] = {}
 	player['frames']['up'][1] = love.graphics.newQuad(0,32,32,32, player['image']:getDimensions())
 	player['frames']['up'][2] = love.graphics.newQuad(32,32,32,32, player['image']:getDimensions())
-  player['frames']['up'][3] = love.graphics.newQuad(64,32,32,32, player['image']:getDimensions())
+  player['frames']['up'][3] = love.graphics.newQuad(0,32,32,32, player['image']:getDimensions())
+  player['frames']['up'][4] = love.graphics.newQuad(64,32,32,32, player['image']:getDimensions())
 	player['frames']['left'] = {}
 	player['frames']['left'][1] = love.graphics.newQuad(0,96,32,32, player['image']:getDimensions())
 	player['frames']['left'][2] = love.graphics.newQuad(32,96,32,32, player['image']:getDimensions())
+  player['frames']['left'][3] = love.graphics.newQuad(0,96,32,32, player['image']:getDimensions())
+  player['frames']['left'][4] = love.graphics.newQuad(32,96,32,32, player['image']:getDimensions())
 	player['frames']['right'] = {}
 	player['frames']['right'][1] = love.graphics.newQuad(0,64,32,32, player['image']:getDimensions())
 	player['frames']['right'][2] = love.graphics.newQuad(32,64,32,32, player['image']:getDimensions())
+  player['frames']['right'][3] = love.graphics.newQuad(0,64,32,32, player['image']:getDimensions())
+  player['frames']['right'][4] = love.graphics.newQuad(32,64,32,32, player['image']:getDimensions())
 	player['direction'] = 'down'
 	player['activeFrame'] = 1
+  player['walk_delay'] = 10
 
 	--generic sound effects
 	player['grunts'] = {}
 	player['grunts'][1] = love.audio.newSource('sfx/zombie-1.wav', 'static')
 	player['grunts'][2] = love.audio.newSource('sfx/zombie-2.wav', 'static')
 	player['grunts'][3] = love.audio.newSource('sfx/zombie-3.wav', 'static')
-
+  
+  --footsteps by tile type
+  player['footsteps'] = {}
+  
+  player['footsteps']['floor_wood'] = {}
+  player['footsteps']['floor_wood'][1] = love.audio.newSource('sfx/stepwood_1.wav', 'static')
+  player['footsteps']['floor_wood'][2] = love.audio.newSource('sfx/stepwood_2.wav', 'static')
+  
+  -- todo: i think should be floor_cement
+  player['footsteps']['cmt'] = {}
+  player['footsteps']['cmt'][1] = love.audio.newSource('sfx/stepstone_1.wav', 'static')
+  player['footsteps']['cmt'][2] = love.audio.newSource('sfx/stepstone_2.wav', 'static')
+  player['footsteps']['cmt'][3] = love.audio.newSource('sfx/stepstone_3.wav', 'static')
+  player['footsteps']['cmt'][4] = love.audio.newSource('sfx/stepstone_4.wav', 'static')
+  player['footsteps']['cmt'][5] = love.audio.newSource('sfx/stepstone_5.wav', 'static')
+  player['footsteps']['cmt'][6] = love.audio.newSource('sfx/stepstone_6.wav', 'static')
+  player['footsteps']['cmt'][7] = love.audio.newSource('sfx/stepstone_7.wav', 'static')
+  player['footsteps']['cmt'][8] = love.audio.newSource('sfx/stepstone_8.wav', 'static')
+  
+  --attacks TODO might be item based
   player['attacks'] = {}
   player['attacks']['puke'] = love.audio.newSource('sfx/zombie-8.wav', 'static')
   player['attacks']['puke']:setPitch(1.5)
@@ -158,15 +183,27 @@ function playerControls()
 	-- todo: Something so you can bind keys
 	if love.keyboard.isDown('down') then
 		player_move(player['x'], player['y'] + 1, start_map)
+    if player['direction'] ~= 'down' then
+      player['activeFrame'] = 1
+    end
 		player['direction'] = 'down'
 	elseif love.keyboard.isDown('up') then
 		player_move(player['x'], player['y'] - 1, start_map)
+    if player['direction'] ~= 'up' then
+      player['activeFrame'] = 1
+    end
 		player['direction'] = 'up'
 	elseif love.keyboard.isDown('left') then
 		player_move(player['x'] - 1, player['y'], start_map)
+    if player['direction'] ~= 'left' then
+      player['activeFrame'] = 1
+    end
 		player['direction'] = 'left'
 	elseif love.keyboard.isDown('right') then
 		player_move(player['x'] + 1, player['y'], start_map)
+    if player['direction'] ~= 'right' then
+      player['activeFrame'] = 1
+    end
 		player['direction'] = 'right'
 	end
 
