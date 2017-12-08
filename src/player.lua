@@ -71,10 +71,10 @@ end
 
 function playerCreate()
 	player = {}
-	player['x'] = 1
-	player['y'] = 16
-	player['visual_x'] = 1 * tile_size
-	player['visual_y'] = 16 * tile_size
+	player['x'] = 2
+	player['y'] = 15
+	player['visual_x'] = 2 * tile_size
+	player['visual_y'] = 15 * tile_size
 	player['moving'] = 0
 	player['weight'] = 10
 	player['image'] = love.graphics.newImage('gfx/CharacterSheet.png')
@@ -121,17 +121,17 @@ end
 
 function playerArrive()
 	if player['arrival'] == 'left' then
-		player['x'] = 1
-		player['visual_x'] = 1 * tile_size
+		player['x'] = 2 --Don't spawn on the border tiles
+		player['visual_x'] = 2 * tile_size
 	elseif player['arrival'] == 'right' then
-		player['x'] = tablelength(start_map)
-		player['visual_x'] = 32 * tile_size
+		player['x'] = tablelength(start_map) - 1
+		player['visual_x'] = 31 * tile_size
 	elseif player['arrival'] == 'up' then
-		player['y'] = 1
-		player['visual_y'] = 1 * tile_size
+		player['y'] = 2
+		player['visual_y'] = 2 * tile_size
 	elseif player['arrival'] == 'down' then
-		player['y'] = tablelength(start_map[1]) --todo: fix map variable name
-		player['visual_y'] = tablelength(start_map[1]) * tile_size
+		player['y'] = tablelength(start_map[1]) - 1 --todo: fix map variable name
+		player['visual_y'] = tablelength(start_map[1]) * tile_size - 1
 	end
 end
 

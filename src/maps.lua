@@ -74,8 +74,8 @@ function houseAlgorithm()
 	-- todo: make a metamap that keeps track of what has been inserted where
 
 	-- start point
-	start_x = love.math.random(32)
-	start_y = love.math.random(16)
+	start_x = love.math.random(3,24)
+	start_y = love.math.random(3,6)
 
 	-- size from 4 to 8
 	size_x = love.math.random(4,8)
