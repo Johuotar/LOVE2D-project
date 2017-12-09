@@ -4,13 +4,12 @@ socket = require "socket"
 -- First up, we need a UDP socket, from which we'll do all our networking.
 udp = socket.udp()
 
--- the address and port of the server
-address, port = "188.226.149.151", 1337
+address, port = "188.226.149.151", 1337 -- address and port of the central server
 entity = 0  -- entity is what we'll be controlling
-updaterate=0.1 -- how long to wait, in seconds, before requesting an update
+updaterate=0.5 -- how long to wait, in seconds, before requesting an update
 world = {} -- the empty world-state
-udp_t = 0
-initialConnectSuccess = false
+udp_t = 0 -- used to control how often we deal with updates
+initialConnectSuccess = false -- currently not working, asserts if networking works
 
 
 -- Setup everything needed to do networking via UDP. Called in love.load()
@@ -83,7 +82,7 @@ function handleNetworkUpdates(dt)
       if udp_t > updaterate then
         -- Again, we prepare a packet payload using string.format, then send it on
         -- its way with udp:send. This is the move update mentioned above.
-        local dg = string.format("%s %f %f", 'move', player['x'], player['y'])
+        local dg = string.format("%s %f %f", 'MOVE', player['x'], player['y'])
         udp:send(dg)
         local dg = string.format("SCORE %s", playerScore)
         udp:send(dg)
@@ -105,15 +104,13 @@ function handleNetworkUpdates(dt)
     ]]--
     repeat
   		data, msg = udp:receive()
-  		if data then -- you remember, right? that all values in lua evaluate as true, save nil and false?
-        ent, cmd, parms = data:match("^(%S*) (%S*) (.*)")
-  			if cmd == 'at' then
-  				local x, y = parms:match("^(%-?[%d.e]*) (%-?[%d.e]*)$")
-          assert(x and y)
-  				x, y = tonumber(x), tonumber(y)
-  				world[ent] = {x=x, y=y}
+  		if data then
+        print('Got dem datas')
+        cmd = data:match("^(%S*)")
+  			if cmd == 'NEW' then
+  				print('Server says hi!')
         else
-          print("unrecognised command:", cmd)
+          print("Unrecognised command:", cmd)
         end
       --elseif msg ~= 'timeout' then
       --  print("Network error: "..tostring(msg))
