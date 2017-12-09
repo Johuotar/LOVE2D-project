@@ -181,6 +181,30 @@ end
 
 function playerControls()
 	-- todo: Something so you can bind keys
+  -- attack/use active item
+	if love.keyboard.isDown('space') then
+		-- todo: check what item is active
+		playerUseItem()
+	end
+  -- code for turning without moving
+  if love.keyboard.isDown('lctrl') and love.keyboard.isDown('down') then
+    player['activeFrame'] = 1
+    player['direction'] = 'down'
+    return true
+  elseif love.keyboard.isDown('lctrl') and love.keyboard.isDown('up') then
+    player['activeFrame'] = 1
+    player['direction'] = 'up'
+    return true
+	elseif love.keyboard.isDown('lctrl') and love.keyboard.isDown('left') then
+    player['activeFrame'] = 1
+    player['direction'] = 'left'
+    return true
+	elseif love.keyboard.isDown('lctrl') and love.keyboard.isDown('right') then
+    player['activeFrame'] = 1
+    player['direction'] = 'right'
+    return true
+	end
+  -- code for moving
 	if love.keyboard.isDown('down') then
 		player_move(player['x'], player['y'] + 1, start_map)
     if player['direction'] ~= 'down' then
@@ -205,11 +229,5 @@ function playerControls()
       player['activeFrame'] = 1
     end
 		player['direction'] = 'right'
-	end
-
-	-- attack/use active item
-	if love.keyboard.isDown('space') then
-		-- todo: check what item is active
-		playerUseItem()
 	end
 end
