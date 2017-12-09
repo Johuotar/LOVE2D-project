@@ -6,6 +6,8 @@ require 'src/player'
 require 'src/ui'
 require 'src/sounds'
 require 'src/projectiles'
+require 'src/networking'
+
 
 function love.load()
   love.window.setMode(1024, 768)
@@ -14,6 +16,9 @@ function love.load()
 	font = love.graphics.newFont('Avara.ttf', 40)
 	love.graphics.setFont(font)
   preloadGraphicsResources()
+
+  -- Setup UDP networking
+  setupUDP()
 
     -- global ingame vars
 	menu = 1
@@ -108,7 +113,7 @@ function createNewActor(of_type, coord_x, coord_y, weight)
 		actors[new_index]['spiritual_factor'] = 1
 		actors[new_index]['hp'] = 1
 	end
-  
+
   -- load asset
 end
 
@@ -337,7 +342,7 @@ function drawActors()
       end
       actors[i]['animation_delay'] = 15
     end
-    
+
 		if actors[i]['visual_x'] < actors[i]['x'] * tile_size then
 			actors[i]['visual_x'] = actors[i]['visual_x'] + 4
 		end
@@ -371,7 +376,7 @@ function drawGame()
 		if player['moving'] > 1 then
       player['walk_delay'] = player['walk_delay'] - 1
     end
-    
+
 		drawActors()
 		drawProjectiles()
 		direction = player['direction']
@@ -382,7 +387,7 @@ function drawGame()
         player['activeFrame'] = 1
       end
       player['walk_delay'] = 10
-      
+
       -- play footstep sound if tile type has sound effect loaded
       tile_type = start_map[player['x']][player['y']]
       if setContains(player['footsteps'], tile_type) then
@@ -416,16 +421,22 @@ function drawEffects()
 	end
 end
 
+
 function love.draw()
 	if menu > 0 and game == 0 then
 		drawMenu()
 	elseif game == 1 and menu == 0 then
 		drawGame()
 		drawUI()
+    drawNetworkUpdates()
 	end
 end
 
+
 function love.update(dt)
+  -- Send and receive updates to the network
+  handleNetworkUpdates(dt)
+
   menuCooldown = math.max ( 0, menuCooldown - dt )
 	if menu > 0 and game == 0 then
 		handleMenu()
