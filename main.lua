@@ -437,8 +437,8 @@ end
 
 
 function love.update(dt)
+  -- Send and receive updates to and from the network
   if checkInitialConnection() then
-    -- Send and receive updates to the network
     handleNetworkUpdates(dt)
   end
 

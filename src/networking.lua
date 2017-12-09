@@ -5,7 +5,7 @@ socket = require "socket"
 udp = socket.udp()
 
 -- the address and port of the server
-address, port = "localhost", 1337
+address, port = "188.226.149.151", 1337
 entity = 0  -- entity is what we'll be controlling
 updaterate=0.1 -- how long to wait, in seconds, before requesting an update
 world = {} -- the empty world-state
@@ -38,10 +38,22 @@ function setupUDP()
     local dg = string.format("%s %s %d %d", entity, 'at', 320, 240)
   	udp:send(dg) -- the magic line in question.
 
+    -- Sends client launch notification on game load
+    greetTheServer()
+
   	-- t is just a variable we use to help us with the update rate in love.update.
   	udp_t = 0 -- (re)set t to 0
   end
 end
+
+
+-- Sends a message to the server informing that a client has launched
+function greetTheServer()
+  -- Send NEW message to server
+  local newClientMsg = "NEW"
+  udp:send(newClientMsg)
+end
+
 
 -- Checks for connection status returned by the socket. This can be checked at
 -- any point in time.
@@ -69,18 +81,12 @@ function handleNetworkUpdates(dt)
     -- only care about updates if player is moving
     if player['moving'] > 0 then
       if udp_t > updaterate then
-    		local x, y = 0, 0
-    		if love.keyboard.isDown('up') then 	y=y-(20*udp_t) end
-    		if love.keyboard.isDown('down') then 	y=y+(20*udp_t) end
-    		if love.keyboard.isDown('left') then 	x=x-(20*udp_t) end
-    		if love.keyboard.isDown('right') then 	x=x+(20*udp_t) end
-
         -- Again, we prepare a packet payload using string.format, then send it on
         -- its way with udp:send. This is the move update mentioned above.
-        local dg = string.format("%s %s %f %f", entity, 'move', x, y)
+        local dg = string.format("%s %f %f", 'move', player['x'], player['y'])
         udp:send(dg)
-        local dg = string.format("%s %s", entity, 'update')
-    		udp:send(dg)
+        local dg = string.format("SCORE %s", playerScore)
+        udp:send(dg)
 
     		udp_t = udp_t-updaterate -- set udp_t for the next round
       end
