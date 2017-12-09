@@ -10,15 +10,15 @@ require 'src/networking'
 
 
 function love.load()
+  -- Setup UDP networking. Has no effect if connection cannot be established.
+  setupUDP()
+
   love.window.setMode(1024, 768)
 	menu_bg = love.graphics.newImage('gfx/bg/menu.jpg')
 	menu_music = love.audio.newSource('music/menu.ogg')
 	font = love.graphics.newFont('Avara.ttf', 40)
 	love.graphics.setFont(font)
   preloadGraphicsResources()
-
-  -- Setup UDP networking
-  setupUDP()
 
     -- global ingame vars
 	menu = 1
@@ -428,14 +428,19 @@ function love.draw()
 	elseif game == 1 and menu == 0 then
 		drawGame()
 		drawUI()
-    drawNetworkUpdates()
+    -- Handle drawing network updates, WIP
+    -- if checkInitialConnection() then
+    --   drawNetworkUpdates()
+    -- end
 	end
 end
 
 
 function love.update(dt)
-  -- Send and receive updates to the network
-  handleNetworkUpdates(dt)
+  if checkInitialConnection() then
+    -- Send and receive updates to the network
+    handleNetworkUpdates(dt)
+  end
 
   menuCooldown = math.max ( 0, menuCooldown - dt )
 	if menu > 0 and game == 0 then
