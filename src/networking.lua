@@ -3,7 +3,7 @@ socket = require "socket"
 
 -- First up, we need a UDP socket, from which we'll do all our networking.
 udp = socket.udp()
-
+-- 188.226.149.151
 address, port = "188.226.149.151", 1337 -- address and port of the central server
 entity = 0  -- entity is what we'll be controlling
 updaterate=0.5 -- how long to wait, in seconds, before requesting an update
@@ -21,7 +21,7 @@ function setupUDP()
   -- "Connect" this socket to the server's address and port using udp:setpeername.
   -- UDP is actually connectionless, this is purely a convenience provided by the
   -- socket library.
-  udp_success, udp_err = udp:setpeername(address, port)
+  -- udp_success, udp_err = udp:setpeername(address, port)
 
   if checkConnectionStatus() then
     initialConnectSuccess = true
@@ -35,7 +35,7 @@ function setupUDP()
     -- the data we want to send (using string.format) and then send it using udp.send.
     -- Since we used udp:setpeername earlier we don't even have to specify where to send it.
     local dg = string.format("%s %s %d %d", entity, 'at', 320, 240)
-  	udp:send(dg) -- the magic line in question.
+  	udp:sendto(dg, address, port) -- the magic line in question.
 
     -- Sends client launch notification on game load
     greetTheServer()
@@ -50,18 +50,18 @@ end
 function greetTheServer()
   -- Send NEW message to server
   local newClientMsg = "NEW"
-  udp:send(newClientMsg)
+  udp:sendto(newClientMsg, address, port)
 end
 
 
 -- Checks for connection status returned by the socket. This can be checked at
 -- any point in time.
 function checkConnectionStatus()
-  if udp_success and udp_err ~= 'timeout' and udp_err ~= 'connection refused' then
+  --if udp_success and udp_err ~= 'timeout' and udp_err ~= 'connection refused' then
     return true
-  else
-    return false
-  end
+  --else
+    --return false
+  --end
 end
 
 -- Check if initial connection succeeds. This controls if we even attempt any
@@ -83,9 +83,9 @@ function handleNetworkUpdates(dt)
         -- Again, we prepare a packet payload using string.format, then send it on
         -- its way with udp:send. This is the move update mentioned above.
         local dg = string.format("%s %f %f", 'MOVE', player['x'], player['y'])
-        udp:send(dg)
+        udp:sendto(dg, address, port)
         local dg = string.format("SCORE %s", playerScore)
-        udp:send(dg)
+        udp:sendto(dg, address, port)
 
     		udp_t = udp_t-updaterate -- set udp_t for the next round
       end
@@ -103,12 +103,12 @@ function handleNetworkUpdates(dt)
     getting familiar with Lua's string handling functions is a must.)
     ]]--
     repeat
-  		data, msg = udp:receive()
+  		data, msg = udp:receivefrom()
   		if data then
         print('Got dem datas')
         cmd = data:match("^(%S*)")
   			if cmd == 'NEW' then
-  				print('Server says hi!')
+  				print("Server says hi using command:"..cmd)
         else
           print("Unrecognised command:", cmd)
         end
