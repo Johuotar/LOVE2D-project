@@ -27,6 +27,8 @@ function drawMenu()
 			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y)
 		end
     love.graphics.print(splashText, 15, 370, 18.1, splashSize)
+    love.graphics.print('HELP SECTION:', 20, 475, 0, 0.6)
+    love.graphics.print('Arrowkeys to move, space to shoot, hold left control to change look direction \n Dodge the monsters and move to new map regions. You cannot return the way you came \n Killing monsters gives scrore.', 20, 500, 0, 0.5)
 		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 80))
 	elseif menu == 2 then
 		menu_base_pos = {}
