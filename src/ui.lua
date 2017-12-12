@@ -18,18 +18,24 @@ end
 
 function drawMenu()
 	if menu == 1 then
+    menu_size = 50
 		menu_base_pos = {}
 		menu_base_pos['x'] = 450
-		menu_base_pos['y'] = 150
+		menu_base_pos['y'] = 270
 		love.graphics.draw(menu_bg, 0, 0)
+    love.graphics.setColor(125, 125, 255)
+    love.graphics.print("Nimi: ", menu_base_pos['x'], menu_base_pos['y'] - menu_size)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.print(playerName, menu_base_pos['x'], menu_base_pos['y'])
 		for i=1, tablelength(menu_items) do
-			coord_y = menu_base_pos['y'] + (i * 80)
+			coord_y = menu_base_pos['y'] + (i * menu_size)
 			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y)
 		end
     love.graphics.print(splashText, 15, 370, 18.1, splashSize)
     love.graphics.print('HELP SECTION:', 20, 475, 0, 0.6)
     love.graphics.print('Arrowkeys to move, space to shoot, hold left control to change look direction \n Dodge the monsters and move to new map regions. You cannot return the way you came \n Killing monsters gives scrore.', 20, 500, 0, 0.5)
-		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 80))
+		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * menu_size))
+    drawScoreBoard(30, 550)
 	elseif menu == 2 then
 		menu_base_pos = {}
 		menu_base_pos['x'] = 250
@@ -40,6 +46,7 @@ function drawMenu()
 			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y)
 		end
 		love.graphics.print('->', menu_base_pos['x'] - 50, menu_base_pos['y'] + (menuchoice * 80))
+    drawScoreBoard(350, 500)
 	elseif menu == 99 then
     menu_base_pos = {}
 		menu_base_pos['x'] = 100
@@ -76,6 +83,28 @@ function drawPlayerScore()
   love.graphics.printf( playerScore, 20, 650, 100, "left" )
 end
 
+function getScoreBoardEntries()
+  highscores = {}
+  raw_entries = {}
+  for line in love.filesystem.lines("highscores.dat") do
+    table.insert(highscores, line)
+  end
+  -- todo: sort by score 
+end
+
+function writeEntryIntoScoreBoard(name, points)
+  entry = name .. ": " .. points .. "\n"
+  scores = love.filesystem.append("highscores.dat", entry)
+end
+
+function drawScoreBoard(x, y)
+  iterator = 1
+  for index,entry in ipairs(highscores) do
+    love.graphics.print(entry, x, y + (iterator * 40))
+    iterator = iterator + 1
+  end
+end
+
 function handleMenu()
 	menuJukebox()
   splashTextIncrease()
@@ -90,7 +119,13 @@ function handleMenu()
 	if menuchoice > table.getn(menu_items) then
 		menuchoice = table.getn(menu_items)
 	elseif menuchoice < 1 then
-		menuchoice = 1
+    if menu == 1 then
+      if menuchoice < 0 then
+        menuchoice = 0
+      end
+    else
+      menuchoice = 1
+    end
 	end
 	-- main menu
 	if menu == 1 then

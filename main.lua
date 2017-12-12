@@ -1,4 +1,6 @@
 debug = true
+local utf8 = require("utf8")
+
 require 'src/utility'
 require 'src/assets'
 require 'src/maps'
@@ -36,6 +38,7 @@ function love.load()
   splashText = "Default splashtext"--Default value
   splashTable = {}
   playerScore = 0
+  playerName = "Deeku"
 
   --option variables
   --todo: save into an options file
@@ -51,7 +54,16 @@ function love.load()
   end
   math.randomseed( os.time() )--seed for randomization from time
   splashText = splashTable[math.random(1, #splashTable )]--number between 1 and last integer in table
+  --scores
+ 
+  if love.filesystem.exists("highscores.dat") ~= true then
+    scores = love.filesystem.newFile("highscores.dat")
+    data = scores:open("w")
+    scores:close()
+  end
+  love.keyboard.setKeyRepeat(true)
 
+  getScoreBoardEntries()
 	--global trigger etc. vars
 	gore_ticker = 0
 
@@ -290,10 +302,12 @@ end
 
 
 function gameOver()
-	--game over, my dude, game over! You lose. Transition to end screen and tell player to f off
+	--game over, my dude, game over! You lose. Transition to end screen and tell player to f off + write score entry
 	menu_items[1] = 'Takasin baanalle :p'
 	menu_items[2] = 'Mee valikkoo'
 	menu_items[3] = 'PAINU VITHUU :o'
+  writeEntryIntoScoreBoard(playerName, playerScore)
+  getScoreBoardEntries()
 	menu = 2
 	game = 0
 end
@@ -423,6 +437,26 @@ function love.draw()
 		drawGame()
 		drawUI()
 	end
+end
+
+function love.textinput(t)
+  --main menu, name
+  if menu == 1 and menuchoice == 0 then
+    playerName = playerName .. t
+  end
+end
+
+function love.keypressed(key)
+  if key == "backspace" and menu == 1 and menuchoice == 0 then
+    -- get the byte offset to the last UTF-8 character in the string.
+    local byteoffset = utf8.offset(playerName, -1)
+
+    if byteoffset then
+        -- remove the last UTF-8 character.
+        -- string.sub operates on bytes rather than UTF-8 characters, so we couldn't do string.sub(text, 1, -2).
+        playerName = string.sub(playerName, 1, byteoffset - 1)
+    end
+  end
 end
 
 function love.update(dt)
