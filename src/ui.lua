@@ -23,12 +23,21 @@ function drawMenu()
 		menu_base_pos['x'] = 450
 		menu_base_pos['y'] = 270
 		love.graphics.draw(menu_bg, 0, 0)
-    love.graphics.setColor(125, 125, 255)
+    if playerName == '' then
+      love.graphics.setColor(255, 0, 0)
+    else
+      love.graphics.setColor(125, 125, 255)
+    end
     love.graphics.print("Nimi: ", menu_base_pos['x'], menu_base_pos['y'] - menu_size)
     love.graphics.setColor(255, 255, 255)
     love.graphics.print(playerName, menu_base_pos['x'], menu_base_pos['y'])
 		for i=1, tablelength(menu_items) do
 			coord_y = menu_base_pos['y'] + (i * menu_size)
+      if playerName == '' and i == 1 then
+        love.graphics.setColor(170, 170, 170)
+      else
+        love.graphics.setColor(255, 255, 255)
+      end
 			love.graphics.print(menu_items[i], menu_base_pos['x'], coord_y)
 		end
     love.graphics.print(splashText, 15, 370, 18.1, splashSize)
@@ -85,15 +94,23 @@ end
 
 function getScoreBoardEntries()
   highscores = {}
-  raw_entries = {}
   for line in love.filesystem.lines("highscores.dat") do
     table.insert(highscores, line)
   end
-  -- todo: sort by score 
+  table.sort(highscores, function(a,b)
+      -- todo: this looks like crap, thanks lua
+      for as in string.gmatch(a, "%S+") do
+        for bs in string.gmatch(b, "%S+") do
+          return as<bs
+        end
+      end
+      return a<b
+    end
+    )
 end
 
 function writeEntryIntoScoreBoard(name, points)
-  entry = name .. ": " .. points .. "\n"
+  entry = points .. " - " .. name .. "\n"
   scores = love.filesystem.append("highscores.dat", entry)
 end
 
@@ -131,7 +148,7 @@ function handleMenu()
 	if menu == 1 then
 
 		if love.keyboard.isDown('return') and menuCooldown == 0 then
-			if menuchoice == 1 then
+      if menuchoice == 1 and playerName ~= '' then
 				game = 1
 				menu = 0
       elseif menuchoice == 2 then
@@ -159,6 +176,9 @@ function handleMenu()
 				love.graphics.setColor(255,255,255)
 				game = 0
 				menu = 1
+        menu_items[1] = 'Rymyämään ->'
+        menu_items[2] = 'Vääntämään :F'
+        menu_items[3] = 'Nukkumaan -.-'
         menuCooldown = menuWait
 			elseif menuchoice == 3 then
 				love.event.quit()
