@@ -63,7 +63,7 @@ function love.load()
   end
   love.keyboard.setKeyRepeat(true)
 
-  getScoreBoardEntries()
+  getScoreBoardEntries(4)
 	--global trigger etc. vars
 	gore_ticker = 0
 
@@ -307,7 +307,7 @@ function gameOver()
 	menu_items[2] = 'Mee valikkoo'
 	menu_items[3] = 'PAINU VITHUU :o'
   writeEntryIntoScoreBoard(playerName, playerScore)
-  getScoreBoardEntries()
+  getScoreBoardEntries(4)
 	menu = 2
 	game = 0
 end

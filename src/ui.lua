@@ -92,7 +92,7 @@ function drawPlayerScore()
   love.graphics.printf( playerScore, 20, 650, 100, "left" )
 end
 
-function getScoreBoardEntries()
+function getScoreBoardEntries(display_rows)
   highscores = {}
   for line in love.filesystem.lines("highscores.dat") do
     table.insert(highscores, line)
@@ -101,12 +101,18 @@ function getScoreBoardEntries()
       -- todo: this looks like crap, thanks lua
       for as in string.gmatch(a, "%S+") do
         for bs in string.gmatch(b, "%S+") do
-          return as<bs
+          return tonumber(as) > tonumber(bs)
         end
-      end
+       end
       return a<b
     end
-    )
+  )
+  -- get the first X entries for menu display
+  for i=1, tablelength(highscores) do
+    if i > display_rows then
+      highscores[i] = nil
+    end
+  end
 end
 
 function writeEntryIntoScoreBoard(name, points)
