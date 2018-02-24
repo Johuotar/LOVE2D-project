@@ -221,9 +221,14 @@ function actorGeneration()
 	-- call this after player is about to enter new map!
 	-- empty actors list and generate it again
 	actors = {}
-	-- a certain amount of liskos from 1 to promille_factor...
-	liskos = love.math.random(100)
-	demonis = love.math.random(10)
+	-- a certain amount of liskos from 50 - promille factor, but minimum of 5.
+	liskos = 50 - player['promilles']
+  if liskos <= 0 then
+    liskos = 5
+  end
+  
+  -- demonis amount is promilles / 10, minimum is none!
+	demonis = 10 - player['promilles'] / 10
 
 	for i=1, liskos do
 		createNewActor('lisko', love.math.random(24),love.math.random(12), 25)
@@ -349,6 +354,7 @@ function handleItems()
       if items[i]['type'] == 'beer' then
         player['promilles'] = player['promilles'] + 15
         player['hp'] = player['hp'] + 5
+        incrementPlayerScore(2)
         if player['max_hp'] < 200 then
           player['max_hp'] = player['max_hp'] + 1
         end
@@ -380,6 +386,7 @@ function handleGame()
 	--loading a new area
 	else
 		start_map = generateMap() --todo: change map variable name
+    itemGeneration()
 		actorGeneration()
 		playerArrive()
 		intermission = 0
