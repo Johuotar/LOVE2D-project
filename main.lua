@@ -65,6 +65,7 @@ function love.load()
 
 	--audio
 	loadJukeboxSongs()
+  loadGenericSounds()
 
 	--player
 	playerCreate()
@@ -99,6 +100,7 @@ function createNewItem(of_type, coord_x, coord_y)
   items[new_index]['y'] = coord_y
   items[new_index]['visual_x'] = coord_x * tile_size
   items[new_index]['visual_y'] = coord_y * tile_size
+  items[new_index]['picked_up'] = false
 end
 
 function createNewActor(of_type, coord_x, coord_y, weight)
@@ -324,6 +326,40 @@ function gameOver()
 	game = 0
 end
 
+function setItemToBeRemoved(index)
+	--set item to be removed, as per table safety https://stackoverflow.com/questions/12394841/safely-remove-items-from-an-array-table-while-iterating
+	items[index]['picked_up'] = true
+end
+
+function removeItems()
+	-- iterate backwards, removing any that were picked up
+	for i=tablelength(items),1,-1 do
+		if items[i]['picked_up'] == true then
+			table.remove(items, i)
+		end
+	end
+end
+
+function handleItems()
+  -- check if item collides with player (TODO possibly other actors!)
+  -- apply effect depending on item type
+  for i=1, tablelength(items) do
+    if items[i]['x'] == player['x'] and items[i]['y'] == player['y'] then
+      --beer: raise drunkenness, restore some hitpoints, raise max_hp by 1 if below threshold
+      if items[i]['type'] == 'beer' then
+        player['promilles'] = player['promilles'] + 15
+        player['hp'] = player['hp'] + 5
+        if player['max_hp'] < 200 then
+          player['max_hp'] = player['max_hp'] + 1
+        end
+        playSoundEffect(sfx['beer_drink'])
+      end
+      setItemToBeRemoved(i)
+    end
+  end
+  removeItems()
+end
+
 --main game loop
 function handleGame()
 	--not loading a new area
@@ -331,6 +367,7 @@ function handleGame()
 		checkPlayerStatus() -- no point executing stuff if ur dead
 		genericControls()
 		gameJukebox()
+    handleItems()
 		handleActors()
 		handleProjectiles()
 		playerControls()

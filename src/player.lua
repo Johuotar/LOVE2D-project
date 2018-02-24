@@ -142,6 +142,9 @@ function playerCreate()
   player['attacks'] = {}
   player['attacks']['puke'] = love.audio.newSource('sfx/zombie-8.wav', 'static')
   player['attacks']['puke']:setPitch(1.5)
+  
+  --status effect timers and other variables not directly related to player
+  promilleDecay = 100
 end
 
 function playerArrive()
@@ -174,6 +177,16 @@ end
 
 function checkPlayerStatus()
 	-- check and apply whatever persistent statuses player has. Also check death.
+  if player['promilles'] > 0 then
+    -- player is drunk. Does it have any other effect except for altering amount of otherworldly enemies?
+    promilleDecay = promilleDecay - 1
+    if promilleDecay < 1 then
+      player['promilles'] = player['promilles'] - 1
+      promilleDecay = 100
+    end
+  elseif player['promilles'] <= 0 then
+    promilleDecay = 100  -- enforce promille decay default value when not counting it
+  end
 	if player['hp'] < 1 then
 		gameOver()
 	end

@@ -8,6 +8,15 @@ function preloadGraphicsResources()
   dynamics_resource = love.graphics.newImage('gfx/CharacterSheet.png')
 end
 
+
+function loadGenericSounds()
+  --general sound effects not related to player or certain actor type
+  sfx = {}
+  
+  --items
+  sfx['beer_drink'] = love.audio.newSource('sfx/beer.wav', 'static')
+end
+
 function loadTileResource()
 	tiles = {}
 

@@ -67,7 +67,11 @@ function drawUI()
 	-- draw ingame ui, hitpoints etc indicator
 	-- set global color vars depending on damage etc.
 	drawEffects()
+  love.graphics.setColor(255,0,0)
 	love.graphics.rectangle("fill", 20, 700, player['hp'], 20)
+  love.graphics.setColor(255,0,255)
+  love.graphics.rectangle("fill", 20, 710, player['promilles'], 20)
+  love.graphics.setColor(255,255,255)
   drawPlayerScore()
 end
 
