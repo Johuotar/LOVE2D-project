@@ -72,10 +72,12 @@ function love.load()
 
 	--other image resources
 	loadActorImages()
+  loadItemImages()
 	loadProjectileImages()
 
 	--audio
 	loadJukeboxSongs()
+  loadGenericSounds()
 
 	--player
 	playerCreate()
@@ -85,6 +87,9 @@ function love.load()
 
 	--projectilebase
 	projectiles = {}
+  
+  --itembase
+  items = {}
 
 	--do init stuff
 	gamePreload()
@@ -96,6 +101,18 @@ function handleActors()
 		checkCollisionWithPlayer(i)
 	end
 	destroyActors()
+end
+
+function createNewItem(of_type, coord_x, coord_y)
+  -- map items: Only need a type and coordinates for now.
+  new_index = tablelength(items) + 1
+  items[new_index] = {}
+  items[new_index]['type'] = of_type
+  items[new_index]['x'] = coord_x
+  items[new_index]['y'] = coord_y
+  items[new_index]['visual_x'] = coord_x * tile_size
+  items[new_index]['visual_y'] = coord_y * tile_size
+  items[new_index]['picked_up'] = false
 end
 
 function createNewActor(of_type, coord_x, coord_y, weight)
@@ -203,13 +220,28 @@ function runActorLogic(actor)
 
 end
 
+function itemGeneration()
+  -- random generate map specific items if need be
+  -- some beer/items perhaps?
+  beers = love.math.random(5)
+  for i=1, beers do
+    createNewItem('beer', love.math.random(24),love.math.random(12))
+  end
+end
+
 function actorGeneration()
 	-- call this after player is about to enter new map!
 	-- empty actors list and generate it again
 	actors = {}
-	-- a certain amount of liskos from 1 to promille_factor...
-	liskos = love.math.random(100)
-	demonis = love.math.random(10)
+	-- a certain amount of liskos from 50 - promille factor, but minimum of 5.
+	liskos = 50 - player['promilles']
+  if liskos <= 0 then
+    liskos = 5
+  end
+  
+  -- demonis amount is promilles / 10, minimum is none!
+	demonis = 10 - player['promilles'] / 10
+
 	for i=1, liskos do
 		createNewActor('lisko', love.math.random(24),love.math.random(12), 25)
 	end
@@ -239,6 +271,7 @@ end
 function gamePreload()
 	start_map = generateMap()
 	actorGeneration()
+  itemGeneration()
   resetPlayerScore()
 end
 
@@ -312,6 +345,41 @@ function gameOver()
 	game = 0
 end
 
+function setItemToBeRemoved(index)
+	--set item to be removed, as per table safety https://stackoverflow.com/questions/12394841/safely-remove-items-from-an-array-table-while-iterating
+	items[index]['picked_up'] = true
+end
+
+function removeItems()
+	-- iterate backwards, removing any that were picked up
+	for i=tablelength(items),1,-1 do
+		if items[i]['picked_up'] == true then
+			table.remove(items, i)
+		end
+	end
+end
+
+function handleItems()
+  -- check if item collides with player (TODO possibly other actors!)
+  -- apply effect depending on item type
+  for i=1, tablelength(items) do
+    if items[i]['x'] == player['x'] and items[i]['y'] == player['y'] then
+      --beer: raise drunkenness, restore some hitpoints, raise max_hp by 1 if below threshold
+      if items[i]['type'] == 'beer' then
+        player['promilles'] = player['promilles'] + 15
+        player['hp'] = player['hp'] + 5
+        incrementPlayerScore(2)
+        if player['max_hp'] < 200 then
+          player['max_hp'] = player['max_hp'] + 1
+        end
+        playSoundEffect(sfx['beer_drink'])
+      end
+      setItemToBeRemoved(i)
+    end
+  end
+  removeItems()
+end
+
 --main game loop
 function handleGame()
 	--not loading a new area
@@ -319,6 +387,7 @@ function handleGame()
 		checkPlayerStatus() -- no point executing stuff if ur dead
 		genericControls()
 		gameJukebox()
+    handleItems()
 		handleActors()
 		handleProjectiles()
 		playerControls()
@@ -331,10 +400,18 @@ function handleGame()
 	--loading a new area
 	else
 		start_map = generateMap() --todo: change map variable name
+    itemGeneration()
 		actorGeneration()
 		playerArrive()
 		intermission = 0
 	end
+end
+
+function drawItems()
+  for i=1, tablelength(items) do
+    tybe = items[i]['type']
+    love.graphics.draw(resource, item_images[tybe], items[i]['visual_x'], items[i]['visual_y'])
+  end
 end
 
 function drawActors()
@@ -386,6 +463,7 @@ function drawGame()
       player['walk_delay'] = player['walk_delay'] - 1
     end
     
+    drawItems()
 		drawActors()
 		drawProjectiles()
 		direction = player['direction']

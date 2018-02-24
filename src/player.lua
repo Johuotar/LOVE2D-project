@@ -87,6 +87,7 @@ function playerCreate()
 	player['fatigue'] = 0
 	player['promilles'] = 0
 	player['equipped'] = 'puke'
+  player['passed_out_time'] = 0
 
 	player['frames'] = {}
 	--directional frames player
@@ -142,6 +143,9 @@ function playerCreate()
   player['attacks'] = {}
   player['attacks']['puke'] = love.audio.newSource('sfx/zombie-8.wav', 'static')
   player['attacks']['puke']:setPitch(1.5)
+  
+  --status effect timers and other variables not directly related to player
+  promilleDecay = 100
 end
 
 function playerArrive()
@@ -174,6 +178,27 @@ end
 
 function checkPlayerStatus()
 	-- check and apply whatever persistent statuses player has. Also check death.
+  if player['promilles'] > 100 then
+    --ps. i dont know why max promilles are 100 but they are, maybe 100% of 5.5???????
+    player['promilles'] = 100  -- do this before applying any effects
+  end
+  if player['promilles'] > 0 then
+    -- player is drunk. Does it have any other effect except for altering amount of otherworldly enemies?
+    promilleDecay = promilleDecay - 1
+    if promilleDecay < 1 then
+      player['promilles'] = player['promilles'] - 1
+      promilleDecay = 100
+    end
+    if player['promilles'] >= 100 then
+      player['passed_out_time'] = 100
+    end
+  elseif player['promilles'] <= 0 then
+    promilleDecay = 100  -- enforce promille decay default value when not counting it
+  end
+  --passed out: blur screen, remove ability to do anything.
+  if player['passed_out_time'] > 0 then
+    player['passed_out_time'] = player['passed_out_time'] - 1
+  end
 	if player['hp'] < 1 then
 		gameOver()
 	end
@@ -181,53 +206,91 @@ end
 
 function playerControls()
 	-- todo: Something so you can bind keys
-  -- attack/use active item
-	if love.keyboard.isDown('space') then
-		-- todo: check what item is active
-		playerUseItem()
-	end
-  -- code for turning without moving
-  if love.keyboard.isDown('lctrl') and love.keyboard.isDown('down') then
-    player['activeFrame'] = 1
-    player['direction'] = 'down'
-    return true
-  elseif love.keyboard.isDown('lctrl') and love.keyboard.isDown('up') then
-    player['activeFrame'] = 1
-    player['direction'] = 'up'
-    return true
-	elseif love.keyboard.isDown('lctrl') and love.keyboard.isDown('left') then
-    player['activeFrame'] = 1
-    player['direction'] = 'left'
-    return true
-	elseif love.keyboard.isDown('lctrl') and love.keyboard.isDown('right') then
-    player['activeFrame'] = 1
-    player['direction'] = 'right'
-    return true
-	end
-  -- code for moving
-	if love.keyboard.isDown('down') then
-		player_move(player['x'], player['y'] + 1, start_map)
-    if player['direction'] ~= 'down' then
-      player['activeFrame'] = 1
+  -- allow controlling either sober or drunk only player is not passed out
+  if player['passed_out_time'] <= 0 then
+    -- attack/use active item
+    if love.keyboard.isDown('space') then
+      -- todo: check what item is active
+      playerUseItem()
     end
-		player['direction'] = 'down'
-	elseif love.keyboard.isDown('up') then
-		player_move(player['x'], player['y'] - 1, start_map)
-    if player['direction'] ~= 'up' then
-      player['activeFrame'] = 1
+    
+    --if player is drunk enough, a small chance per update cycle of stumbling to random tile in side
+    if player['promilles'] > 50 then
+      stumble_value = 10 + player['promilles'] / 2
+      if love.math.random(stumble_value) > 35 then 
+        -- code for stumbling into random direction
+        dir = love.math.random(4)
+        if dir == 1 then
+          player_move(player['x'], player['y'] + 1, start_map)
+          if player['direction'] ~= 'down' then
+            player['activeFrame'] = 1
+          end
+          player['direction'] = 'down'
+        elseif dir == 2 then
+          player_move(player['x'], player['y'] - 1, start_map)
+          if player['direction'] ~= 'up' then
+            player['activeFrame'] = 1
+          end
+          player['direction'] = 'up'
+        elseif dir == 3 then
+          player_move(player['x'] - 1, player['y'], start_map)
+          if player['direction'] ~= 'left' then
+            player['activeFrame'] = 1
+          end
+          player['direction'] = 'left'
+        elseif dir == 4 then
+          player_move(player['x'] + 1, player['y'], start_map)
+          if player['direction'] ~= 'right' then
+            player['activeFrame'] = 1
+          end
+          player['direction'] = 'right'
+        end
+      end
     end
-		player['direction'] = 'up'
-	elseif love.keyboard.isDown('left') then
-		player_move(player['x'] - 1, player['y'], start_map)
-    if player['direction'] ~= 'left' then
+    
+    -- code for turning without moving
+    if love.keyboard.isDown('lctrl') and love.keyboard.isDown('down') then
       player['activeFrame'] = 1
-    end
-		player['direction'] = 'left'
-	elseif love.keyboard.isDown('right') then
-		player_move(player['x'] + 1, player['y'], start_map)
-    if player['direction'] ~= 'right' then
+      player['direction'] = 'down'
+      return true
+    elseif love.keyboard.isDown('lctrl') and love.keyboard.isDown('up') then
       player['activeFrame'] = 1
+      player['direction'] = 'up'
+      return true
+    elseif love.keyboard.isDown('lctrl') and love.keyboard.isDown('left') then
+      player['activeFrame'] = 1
+      player['direction'] = 'left'
+      return true
+    elseif love.keyboard.isDown('lctrl') and love.keyboard.isDown('right') then
+      player['activeFrame'] = 1
+      player['direction'] = 'right'
+      return true
     end
-		player['direction'] = 'right'
-	end
+    -- code for moving
+    if love.keyboard.isDown('down') then
+      player_move(player['x'], player['y'] + 1, start_map)
+      if player['direction'] ~= 'down' then
+        player['activeFrame'] = 1
+      end
+      player['direction'] = 'down'
+    elseif love.keyboard.isDown('up') then
+      player_move(player['x'], player['y'] - 1, start_map)
+      if player['direction'] ~= 'up' then
+        player['activeFrame'] = 1
+      end
+      player['direction'] = 'up'
+    elseif love.keyboard.isDown('left') then
+      player_move(player['x'] - 1, player['y'], start_map)
+      if player['direction'] ~= 'left' then
+        player['activeFrame'] = 1
+      end
+      player['direction'] = 'left'
+    elseif love.keyboard.isDown('right') then
+      player_move(player['x'] + 1, player['y'], start_map)
+      if player['direction'] ~= 'right' then
+        player['activeFrame'] = 1
+      end
+      player['direction'] = 'right'
+    end
+  end
 end

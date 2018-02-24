@@ -8,6 +8,15 @@ function preloadGraphicsResources()
   dynamics_resource = love.graphics.newImage('gfx/CharacterSheet.png')
 end
 
+
+function loadGenericSounds()
+  --general sound effects not related to player or certain actor type
+  sfx = {}
+  
+  --items
+  sfx['beer_drink'] = love.audio.newSource('sfx/beer.wav', 'static')
+end
+
 function loadTileResource()
 	tiles = {}
 
@@ -57,6 +66,13 @@ function loadActorImages()
 
 	-- neutral
 	-- actors_images['light'] = love.graphics.newQuad(40,40,20,20,resource:getDimensions())
+end
+
+function loadItemImages()
+	item_images = {}
+
+  --items dont really need update procedures.  For clean code purposes, I'm keeping them separate from actors
+  item_images['beer'] = love.graphics.newQuad(0,64,32,32, resource:getDimensions())
 end
 
 function loadProjectileImages()
