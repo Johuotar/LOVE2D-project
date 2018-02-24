@@ -60,6 +60,7 @@ function love.load()
 
 	--other image resources
 	loadActorImages()
+  loadItemImages()
 	loadProjectileImages()
 
 	--audio
@@ -73,6 +74,9 @@ function love.load()
 
 	--projectilebase
 	projectiles = {}
+  
+  --itembase
+  items = {}
 
 	--do init stuff
 	gamePreload()
@@ -84,6 +88,17 @@ function handleActors()
 		checkCollisionWithPlayer(i)
 	end
 	destroyActors()
+end
+
+function createNewItem(of_type, coord_x, coord_y)
+  -- map items: Only need a type and coordinates for now.
+  new_index = tablelength(items) + 1
+  items[new_index] = {}
+  items[new_index]['type'] = of_type
+  items[new_index]['x'] = coord_x
+  items[new_index]['y'] = coord_y
+  items[new_index]['visual_x'] = coord_x * tile_size
+  items[new_index]['visual_y'] = coord_y * tile_size
 end
 
 function createNewActor(of_type, coord_x, coord_y, weight)
@@ -191,6 +206,15 @@ function runActorLogic(actor)
 
 end
 
+function itemGeneration()
+  -- random generate map specific items if need be
+  -- some beer/items perhaps?
+  beers = love.math.random(5)
+  for i=1, beers do
+    createNewItem('beer', love.math.random(24),love.math.random(12))
+  end
+end
+
 function actorGeneration()
 	-- call this after player is about to enter new map!
 	-- empty actors list and generate it again
@@ -198,6 +222,7 @@ function actorGeneration()
 	-- a certain amount of liskos from 1 to promille_factor...
 	liskos = love.math.random(100)
 	demonis = love.math.random(10)
+
 	for i=1, liskos do
 		createNewActor('lisko', love.math.random(24),love.math.random(12), 25)
 	end
@@ -227,6 +252,7 @@ end
 function gamePreload()
 	start_map = generateMap()
 	actorGeneration()
+  itemGeneration()
   resetPlayerScore()
 end
 
@@ -323,6 +349,13 @@ function handleGame()
 	end
 end
 
+function drawItems()
+  for i=1, tablelength(items) do
+    tybe = items[i]['type']
+    love.graphics.draw(resource, item_images[tybe], items[i]['visual_x'], items[i]['visual_y'])
+  end
+end
+
 function drawActors()
 	for i=1, tablelength(actors) do
     -- todo: active frames/animations system for actors
@@ -372,6 +405,7 @@ function drawGame()
       player['walk_delay'] = player['walk_delay'] - 1
     end
     
+    drawItems()
 		drawActors()
 		drawProjectiles()
 		direction = player['direction']

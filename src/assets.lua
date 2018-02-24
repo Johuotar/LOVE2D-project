@@ -59,6 +59,13 @@ function loadActorImages()
 	-- actors_images['light'] = love.graphics.newQuad(40,40,20,20,resource:getDimensions())
 end
 
+function loadItemImages()
+	item_images = {}
+
+  --items dont really need update procedures.  For clean code purposes, I'm keeping them separate from actors
+  item_images['beer'] = love.graphics.newQuad(0,64,32,32, resource:getDimensions())
+end
+
 function loadProjectileImages()
 	projectile_images = {}
 
