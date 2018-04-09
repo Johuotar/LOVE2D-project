@@ -79,6 +79,7 @@ function love.load()
 
 	--audio
 	loadJukeboxSongs()
+  loadSpecialSongs()
   loadGenericSounds()
 
 	--player
@@ -408,7 +409,8 @@ else
     --determine if a scene will be generated and what type if so
     --todo: scene events happen currently at a fixed random chance 1/10
     --todo: move to separate functions
-    scene_trigger = 9
+    scene_trigger = love.math.random(100)
+    scene = 'no_scene'
     if scene_trigger < 10 then
       --scene triggered: resolve scene type
       --todo: always guitar man scene

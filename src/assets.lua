@@ -50,6 +50,15 @@ function loadJukeboxSongs()
 
 	jukebox[1] = love.audio.newSource('music/jukebox/sharkest.ogg')
 	jukebox[2] = love.audio.newSource('music/jukebox/urut.ogg')
+  jukebox[3] = love.audio.newSource('music/jukebox/analog.ogg')
+end
+
+function loadSpecialSongs()
+  --scenes etc.
+  scene_playlists = {}
+  
+  scene_playlists['guitar_man'] = {}
+  scene_playlists['guitar_man'][1] = love.audio.newSource('music/specials/guitar_man_1.ogg')
 end
 
 function loadActorImages()

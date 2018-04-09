@@ -50,21 +50,37 @@ function menuJukebox()
 end
 
 function gameJukebox()
-	-- disable menu music if playing
-	if menu_music:isPlaying() == true then
-		menu_music:stop()
-	end
+  -- suspend jukebox operation when any scene is playing
+  if scene == 'no_scene' then
+    -- disable menu music if playing
+    if menu_music:isPlaying() == true then
+      menu_music:stop()
+    end
+    --disable special songs if playing
+    --todo: universalize this
+    for track=1, tablelength(scene_playlists['guitar_man']) do
+      if scene_playlists['guitar_man'][track]:isPlaying() then
+        scene_playlists['guitar_man'][track]:stop()
+      end
+    end
 
-	ended = true
+    ended = true
 
-	-- dont do anything while any jukebox or event song is playing
-	for i=1, tablelength(jukebox) do
-		if jukebox[i]:isPlaying() == true then
-			ended = false
-		end
-	end
-	if ended == true then
-		shuffle = love.math.random(tablelength(jukebox))
-		playTrack(jukebox[shuffle])
-	end
+    -- dont do anything while previous jukebox song is playing
+    for i=1, tablelength(jukebox) do
+      if jukebox[i]:isPlaying() == true then
+        ended = false
+      end
+    end
+    if ended == true then
+      shuffle = love.math.random(tablelength(jukebox))
+      playTrack(jukebox[shuffle])
+    end
+  else
+    for i=1, tablelength(jukebox) do
+      if jukebox[i]:isPlaying() then
+        jukebox[i]:stop()
+      end
+    end
+  end
 end

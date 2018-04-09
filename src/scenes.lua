@@ -6,4 +6,7 @@ function guitarManSceneSetup()
   actors = {}
   
   createNewActor('guitar_man', 16, 8, 0)
+  
+  --play teh guitar
+  playTrack(scene_playlists['guitar_man'][1])
 end
