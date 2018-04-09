@@ -66,6 +66,10 @@ function loadActorImages()
 
 	-- neutral
 	-- actors_images['light'] = love.graphics.newQuad(40,40,20,20,resource:getDimensions())
+  actors_images['guitar_man'] = {}
+  actors_images['guitar_man'][1] = love.graphics.newQuad(0,256,32,32, dynamics_resource:getDimensions())
+  actors_images['guitar_man'][2] = love.graphics.newQuad(32,256,32,32, dynamics_resource:getDimensions())
+  
 end
 
 function loadItemImages()

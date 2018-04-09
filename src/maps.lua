@@ -1,5 +1,5 @@
 --[[
-Functions for generating the maps and housing within the maps.
+Functions for generating specific maps and random maps with accompanying scenery.
 --]]
 
 function generateMap()
@@ -150,4 +150,29 @@ function houseAlgorithm()
 	else
 		houseAlgorithm()
 	end
+end
+
+function guitarManMap()
+  --Guitar Man: aka Piis n Lööv Veikko.
+  --basically an intersection scene with a man in the middle playing guitar
+	
+  --todo: generate an intersection of buildings instead of random base type.
+	tile_type = love.math.random(100)
+	-- todo: base types affect algorithms and map layouts
+	if tile_type < 50 then
+		base_type = 'cmt'
+	else
+		base_type = 'floor_wood'
+	end
+
+	map = {}
+	-- todo: maybe use short codes or smth to represent tile types...
+	for x=1, 32 do
+		map[x] = {}
+		for y=1, 16 do
+			map[x][y] = base_type
+		end
+	end
+  
+  return map
 end

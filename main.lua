@@ -8,6 +8,7 @@ require 'src/player'
 require 'src/ui'
 require 'src/sounds'
 require 'src/projectiles'
+require 'src/scenes'
 
 function love.load()
   love.window.setMode(1024, 768)
@@ -30,6 +31,7 @@ function love.load()
 	game = 0
 	intermission = 0
 	generateTileProperties()
+  scene = 'no_scene'
 	tile_size = 32  -- finally!! power of two
   splashSize = 0.45
   splashIncreasing = true
@@ -136,7 +138,11 @@ function createNewActor(of_type, coord_x, coord_y, weight)
 		actors[new_index]['physical_factor'] = 0
 		actors[new_index]['spiritual_factor'] = 1
 		actors[new_index]['hp'] = 1
-	end
+	else  --undetermined. Probably humans
+    actors[new_index]['physical_factor'] = 1
+    actors[new_index]['spiritual_factor'] = 0.0001  -- you can puke humans to death, it's just ridiculously hard
+    actors[new_index]['hp'] = 100
+  end
   
   -- load asset
 end
@@ -229,7 +235,7 @@ function itemGeneration()
   end
 end
 
-function actorGeneration()
+function normalActorGeneration()
 	-- call this after player is about to enter new map!
 	-- empty actors list and generate it again
 	actors = {}
@@ -270,7 +276,7 @@ end
 
 function gamePreload()
 	start_map = generateMap()
-	actorGeneration()
+	normalActorGeneration()
   itemGeneration()
   resetPlayerScore()
 end
@@ -398,10 +404,28 @@ function handleGame()
       player['cooldown'] = player['cooldown'] - 1
     end
 	--loading a new area
-	else
-		start_map = generateMap() --todo: change map variable name
-    itemGeneration()
-		actorGeneration()
+else
+    --determine if a scene will be generated and what type if so
+    --todo: scene events happen currently at a fixed random chance 1/10
+    --todo: move to separate functions
+    scene_trigger = 9
+    if scene_trigger < 10 then
+      --scene triggered: resolve scene type
+      --todo: always guitar man scene
+      scene = 'guitar_man_intersection'
+      start_map = guitarManMap()
+    else
+      start_map = generateMap() --todo: change map variable name
+    end
+    
+    --normal scene
+    if scene == 'no_scene' then
+      itemGeneration()
+      normalActorGeneration()
+    else
+      --other scenes
+      guitarManSceneSetup()
+    end
 		playerArrive()
 		intermission = 0
 	end
