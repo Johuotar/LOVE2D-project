@@ -30,6 +30,8 @@ function love.load()
 	loading = 0
 	game = 0
 	intermission = 0
+  events_ticker = 100 -- interval
+  cops_arrival_timer = 60 --how long till cops are called on you for loitering
 	generateTileProperties()
   scene = 'no_scene'
 	tile_size = 32  -- finally!! power of two
@@ -118,7 +120,7 @@ function createNewItem(of_type, coord_x, coord_y)
   items[new_index]['picked_up'] = false
 end
 
-function createNewActor(of_type, coord_x, coord_y, weight)
+function createNewActor(of_type, state, coord_x, coord_y, weight)
 	new_index = tablelength(actors) + 1
 	actors[new_index] = {}
 	actors[new_index]['type'] = of_type
@@ -129,9 +131,10 @@ function createNewActor(of_type, coord_x, coord_y, weight)
 	actors[new_index]['moving'] = 0
 	actors[new_index]['weight'] = weight
 	actors[new_index]['destroyed'] = false
-  actors[new_index]['status'] = 'normal'
+  actors[new_index]['status'] = state
   actors[new_index]['frame'] = 1
   actors[new_index]['animation_delay'] = 15
+  actors[new_index]['direction'] = 'up' --left,down,right,up
 
 	-- variables that depend on actor type
 	-- lisko or demon: spiritual enemies. No damage gained from physical attacks
@@ -139,7 +142,11 @@ function createNewActor(of_type, coord_x, coord_y, weight)
 		actors[new_index]['physical_factor'] = 0
 		actors[new_index]['spiritual_factor'] = 1
 		actors[new_index]['hp'] = 1
-	else  --undetermined. Probably humans
+  elseif of_type == 'cop' then
+    actors[new_index]['physical_factor'] = 1
+		actors[new_index]['spiritual_factor'] = 0.0001
+		actors[new_index]['hp'] = 200
+	else  --undetermined. Probably generic humans
     actors[new_index]['physical_factor'] = 1
     actors[new_index]['spiritual_factor'] = 0.0001  -- you can puke humans to death, it's just ridiculously hard
     actors[new_index]['hp'] = 100
@@ -224,6 +231,33 @@ function runActorLogic(actor)
       incrementPlayerScore(5)
     end
 	end
+  
+  if actors[actor]['type'] == 'cop' then
+		-- cop hangs around until provoked
+    -- anti-loiter cops chase players
+    if actors[actor]['status'] == 'anti_loiter' then
+      -- chase player
+      if player['x'] < actors[actor]['x'] then
+        actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
+      end
+      if player['x'] > actors[actor]['x'] then
+        actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
+      end
+      if player['y'] < actors[actor]['y'] then
+        actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
+      end
+      if player['y'] > actors[actor]['y'] then
+        actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
+      end
+      --if hitting player, push player to that direction
+      actors[actor]['moving'] = actors[actor]['moving'] - 1
+    end
+		
+    if actors[actor]['hp'] < 1 then
+      actors[actor]['destroyed'] = true
+      incrementPlayerScore(100)
+    end
+	end
 
 end
 
@@ -250,10 +284,10 @@ function normalActorGeneration()
 	demonis = 10 - player['promilles'] / 10
 
 	for i=1, liskos do
-		createNewActor('lisko', love.math.random(24),love.math.random(12), 25)
+		createNewActor('lisko', 'normal', love.math.random(24),love.math.random(12), 25)
 	end
 	for i=1, demonis do
-		createNewActor('demon', love.math.random(24),love.math.random(12), 50)
+		createNewActor('demon', 'normal', love.math.random(24),love.math.random(12), 50)
 	end
 end
 
@@ -336,7 +370,20 @@ function checkCollisionWithPlayer(actor)
 		if actors[actor]['type'] == 'lisko' or actors[actor]['type'] == 'demon' then
 			applyPlayerEffect('takeDamage', -15)
 			setActorToBeRemoved(actor)
-		end
+		elseif actors[actor]['type'] == 'cop' then
+			if actors[actor]['status'] == 'anti_loiter' then
+        --push player
+        if actors[actor]['direction'] == 'left' then
+          player_move(player['x']-1, player['y'], start_map)
+        elseif actors[actor]['direction'] == 'right' then
+          player_move(player['x']+1, player['y'], start_map)
+        elseif actors[actor]['direction'] == 'down' then
+          player_move(player['x'], player['y']+1, start_map)
+        elseif actors[actor]['direction'] == 'up' then
+          player_move(player['x'], player['y']-1, start_map)
+        end
+      end
+    end
 	end
 end
 
@@ -387,6 +434,24 @@ function handleItems()
   removeItems()
 end
 
+function handleWorldVars()
+  --check status and update game based on global variables
+  --generic and semi-random events like weather, cop arrivals
+  --everything basically that's not tied to intermissions
+  events_ticker = events_ticker - 1
+  cops_arrival_timer = cops_arrival_timer - 1
+  if events_ticker < 1 then
+    cops_arrival_timer = cops_arrival_timer - 1
+    events_ticker = 100
+    print("tick tock!")
+  end
+  
+  if cops_arrival_timer == 0 then
+    --create a cop on random edge and set it to 'anti_loiter'
+    createNewActor('cop', 'anti_loiter', 1, 1, 30)
+  end
+end
+
 --main game loop
 function handleGame()
 	--not loading a new area
@@ -404,6 +469,7 @@ function handleGame()
     if player['cooldown'] > 0 then
       player['cooldown'] = player['cooldown'] - 1
     end
+    handleWorldVars()
 	--loading a new area
 else
     --determine if a scene will be generated and what type if so

@@ -65,6 +65,7 @@ function loadActorImages()
 	actors_images = {}
 
   -- START FRAMES FROM 1!!!
+  --enemies and hallus
   actors_images['lisko'] = {}
 	actors_images['lisko'][1] = love.graphics.newQuad(0,160,32,32, dynamics_resource:getDimensions())
 	actors_images['lisko'][2] = love.graphics.newQuad(32,160,32,32, dynamics_resource:getDimensions())
@@ -78,6 +79,9 @@ function loadActorImages()
   actors_images['guitar_man'] = {}
   actors_images['guitar_man'][1] = love.graphics.newQuad(0,256,32,32, dynamics_resource:getDimensions())
   actors_images['guitar_man'][2] = love.graphics.newQuad(32,256,32,32, dynamics_resource:getDimensions())
+  
+  actors_images['cop'] = {}
+  actors_images['cop'][1] = love.graphics.newQuad(0,320,32,32, dynamics_resource:getDimensions())
   
 end
 
