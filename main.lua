@@ -30,7 +30,7 @@ function love.load()
 	loading = 0
 	game = 0
 	intermission = 0
-  events_ticker = 100 -- interval
+  events_ticker = 50 -- interval
   cops_arrival_timer = 60 --how long till cops are called on you for loitering
 	generateTileProperties()
   scene = 'no_scene'
@@ -239,15 +239,19 @@ function runActorLogic(actor)
       -- chase player
       if player['x'] < actors[actor]['x'] then
         actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
+        actors[actor]['direction'] = 'left'
       end
       if player['x'] > actors[actor]['x'] then
         actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
+        actors[actor]['direction'] = 'right'
       end
       if player['y'] < actors[actor]['y'] then
         actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
+        actors[actor]['direction'] = 'up'
       end
       if player['y'] > actors[actor]['y'] then
         actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
+        actors[actor]['direction'] = 'down'
       end
       --if hitting player, push player to that direction
       actors[actor]['moving'] = actors[actor]['moving'] - 1
@@ -439,16 +443,17 @@ function handleWorldVars()
   --generic and semi-random events like weather, cop arrivals
   --everything basically that's not tied to intermissions
   events_ticker = events_ticker - 1
-  cops_arrival_timer = cops_arrival_timer - 1
   if events_ticker < 1 then
-    cops_arrival_timer = cops_arrival_timer - 1
-    events_ticker = 100
-    print("tick tock!")
+    if cops_arrival_timer > 0 then
+      cops_arrival_timer = cops_arrival_timer - 1
+    end
+    events_ticker = 50
   end
   
   if cops_arrival_timer == 0 then
     --create a cop on random edge and set it to 'anti_loiter'
-    createNewActor('cop', 'anti_loiter', 1, 1, 30)
+    createNewActor('cop', 'anti_loiter', 1, 1, 15)
+    cops_arrival_timer = -100  --dont allow second cop to appear
   end
 end
 
@@ -495,6 +500,9 @@ else
       guitarManSceneSetup()
     end
 		playerArrive()
+    --reset world triggers
+    cops_arrival_timer = 60
+    events_ticker = 50
 		intermission = 0
 	end
 end
