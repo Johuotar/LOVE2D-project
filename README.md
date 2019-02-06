@@ -1,9 +1,8 @@
-# deeku
+# walking sim
 
 ## requirements
 
 - LÖVE 0.10.2
-- balls
 
 ## how to run
 
