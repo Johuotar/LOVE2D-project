@@ -400,6 +400,45 @@ function actor_move(actor, coord_x, coord_y)
 	end
 end
 
+function playerInteractWithActor(actor)
+	-- check whether or not player can press button to interact with NPC
+	-- do interaction if possible
+	-- simple adjacency and direction rule
+	if player['direction'] == 'up' and actors[actor]['x'] == player['x'] and actors[actor]['y'] == player['y'] - 1 then
+	    return true
+	elseif player['direction'] == 'down' and actors[actor]['x'] == player['x'] and actors[actor]['y'] == player['y'] + 1 then
+	    return true
+	elseif player['direction'] == 'left' and actors[actor]['x'] == player['x'] - 1 and actors[actor]['y'] == player['y'] then
+	    return true
+	elseif player['direction'] == 'right' and actors[actor]['x'] == player['x'] + 1 and actors[actor]['y'] == player['y'] then
+	    return true
+	-- todo: other directions
+	else
+		return false
+	end
+end
+
+function playerInteractWithMap()
+	-- check whether or not player can interact with a tile on the map
+	-- Depending on tile type, do something MAYBE
+	-- else play "cant do" sound in true spirit of early FPS games ("uhh" from Doom!)
+	-- simple adjacency and direction rule
+	-- todo: check that player does not interact out of bounds
+	print("interacting with map and actors")
+	for i=1, tablelength(actors) do
+		playerInteractWithActor(i)
+	end
+	if player['direction'] == 'up' then
+		interact_target = start_map[player['x']][player['y']-1]
+	elseif player['direction'] == 'down' then
+	    interact_target = start_map[player['x']][player['y']+1]
+	elseif player['direction'] == 'left' then
+	    interact_target = start_map[player['x']-1][player['y']]
+	elseif player['direction'] == 'right' then
+	    interact_target = start_map[player['x']+1][player['y']]
+	end
+end
+
 function checkCollisionWithPlayer(actor)
 	-- if collision between id'd actor and player happens, do something
 	if actors[actor]['x'] == player['x'] and actors[actor]['y'] == player['y'] then

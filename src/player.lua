@@ -292,5 +292,9 @@ function playerControls()
       end
       player['direction'] = 'right'
     end
+	-- code for interacting with environment
+	if love.keyboard.isDown('f') then
+	  playerInteractWithMap()
+	end
   end
 end
