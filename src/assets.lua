@@ -80,6 +80,9 @@ function loadActorImages()
   actors_images['guitar_man'] = {}
   actors_images['guitar_man'][1] = love.graphics.newQuad(0,256,32,32, dynamics_resource:getDimensions())
   actors_images['guitar_man'][2] = love.graphics.newQuad(32,256,32,32, dynamics_resource:getDimensions())
+  actors_images['beer_guy'] = {}
+  actors_images['beer_guy'][1] = love.graphics.newQuad(0,288,32,32, dynamics_resource:getDimensions())
+  actors_images['beer_guy'][2] = love.graphics.newQuad(32,288,32,32, dynamics_resource:getDimensions()) 
   
   actors_images['cop'] = {}
   actors_images['cop'][1] = love.graphics.newQuad(0,320,32,32, dynamics_resource:getDimensions())

@@ -146,7 +146,7 @@ function createNewActor(of_type, state, coord_x, coord_y, weight)
     actors[new_index]['physical_factor'] = 1
 		actors[new_index]['spiritual_factor'] = 0.0001
 		actors[new_index]['hp'] = 200
-	else  --undetermined. Probably generic humans
+  else  --undetermined. Probably generic humans
     actors[new_index]['physical_factor'] = 1
     actors[new_index]['spiritual_factor'] = 0.0001  -- you can puke humans to death, it's just ridiculously hard
     actors[new_index]['hp'] = 100
@@ -172,97 +172,123 @@ end
 
 function runActorLogic(actor)
 	--provide with index
+	if actors[actor]['type'] == 'beer_guy' then
+		-- move around randomly
+		-- todo: recruitment
+		dir = love.math.random(5)
+		if dir == 1 then
+			actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
+		elseif dir == 2 then
+			actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
+		elseif dir == 3 then
+			actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
+		elseif dir == 4 then
+			actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
+		elseif dir == 5 then
+			-- no move
+		end
+		actors[actor]['moving'] = actors[actor]['moving'] - 1
+		
+		-- no score is awarded for destroying fellow beer guys
+		if actors[actor]['hp'] < 1 then
+			-- todo: maybe do something different?
+			actors[actor]['destroyed'] = true
+			incrementPlayerScore(0)
+		end
+	end
+  
 
 	--lisko: sprawl around randomly!
 	if actors[actor]['type'] == 'lisko' then
-    if actors[actor]['status'] == 'alert' then
-      -- chase player
-      if player['x'] < actors[actor]['x'] then
-        actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
-      end
-      if player['x'] > actors[actor]['x'] then
-        actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
-      end
-      if player['y'] < actors[actor]['y'] then
-        actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
-      end
-      if player['y'] > actors[actor]['y'] then
-        actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
-      end
-    else
-      dir = love.math.random(5)
-      if dir == 1 then
-        actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
-      elseif dir == 2 then
-        actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
-      elseif dir == 3 then
-        actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
-      elseif dir == 4 then
-        actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
-      elseif dir == 5 then
-        -- no move
-      end
-    end
+		if actors[actor]['status'] == 'alert' then
+			-- chase player
+			if player['x'] < actors[actor]['x'] then
+				actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
+			end
+			if player['x'] > actors[actor]['x'] then
+				actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
+			end
+			if player['y'] < actors[actor]['y'] then
+				actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
+			end
+			if player['y'] > actors[actor]['y'] then
+				actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
+			end
+		else
+			dir = love.math.random(5)
+			if dir == 1 then
+				actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
+			elseif dir == 2 then
+				actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
+			elseif dir == 3 then
+				actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
+			elseif dir == 4 then
+				actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
+			elseif dir == 5 then
+				-- no move
+			end
+		end
 		actors[actor]['moving'] = actors[actor]['moving'] - 1
 
-    -- set chasing status if player is too near
-    if player['x'] - actors[actor]['x'] < 5 and player['x'] - actors[actor]['x'] > -5 then
-      if player['y'] - actors[actor]['y'] < 5 and player['y'] - actors[actor]['y'] > -5 then
-        actors[actor]['status'] = 'alert'
-      end
-    else
-      actors[actor]['status'] = 'normal'
-    end
-    if actors[actor]['hp'] < 1 then
-      actors[actor]['destroyed'] = true
-      incrementPlayerScore(1)
-    end
+		-- set chasing status if player is too near
+		if player['x'] - actors[actor]['x'] < 5 and player['x'] - actors[actor]['x'] > -5 then
+			if player['y'] - actors[actor]['y'] < 5 and player['y'] - actors[actor]['y'] > -5 then
+				actors[actor]['status'] = 'alert'
+			end
+		else
+			actors[actor]['status'] = 'normal'
+		end
+		if actors[actor]['hp'] < 1 then
+			actors[actor]['destroyed'] = true
+			incrementPlayerScore(1)
+		end
 	end
+	
 	if actors[actor]['type'] == 'demon' then
 		-- demon glides around
+		-- todo: create an actual "path" it traverses instead of teleporting around
 		dir_x = love.math.random(-5, 5)
 		dir_y = love.math.random(-5, 5)
 
 		actor_move(actor, actors[actor]['x'] + dir_x, actors[actor]['y'] + dir_y)
 
 		actors[actor]['moving'] = actors[actor]['moving'] - 1
-    if actors[actor]['hp'] < 1 then
-      actors[actor]['destroyed'] = true
-      incrementPlayerScore(5)
-    end
-	end
-  
-  if actors[actor]['type'] == 'cop' then
-		-- cop hangs around until provoked
-    -- anti-loiter cops chase players
-    if actors[actor]['status'] == 'anti_loiter' then
-      -- chase player
-      if player['x'] < actors[actor]['x'] then
-        actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
-        actors[actor]['direction'] = 'left'
-      end
-      if player['x'] > actors[actor]['x'] then
-        actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
-        actors[actor]['direction'] = 'right'
-      end
-      if player['y'] < actors[actor]['y'] then
-        actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
-        actors[actor]['direction'] = 'up'
-      end
-      if player['y'] > actors[actor]['y'] then
-        actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
-        actors[actor]['direction'] = 'down'
-      end
-      --if hitting player, push player to that direction
-      actors[actor]['moving'] = actors[actor]['moving'] - 1
-    end
-		
-    if actors[actor]['hp'] < 1 then
-      actors[actor]['destroyed'] = true
-      incrementPlayerScore(100)
-    end
+		if actors[actor]['hp'] < 1 then
+		  actors[actor]['destroyed'] = true
+		  incrementPlayerScore(5)
+		end
 	end
 
+    if actors[actor]['type'] == 'cop' then
+		-- cop hangs around until provoked
+		-- anti-loiter cops chase players
+		if actors[actor]['status'] == 'anti_loiter' then
+			-- chase player
+			if player['x'] < actors[actor]['x'] then
+			  actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
+			  actors[actor]['direction'] = 'left'
+			end
+			if player['x'] > actors[actor]['x'] then
+			  actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
+			  actors[actor]['direction'] = 'right'
+			end
+			if player['y'] < actors[actor]['y'] then
+			  actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
+			  actors[actor]['direction'] = 'up'
+			end
+			if player['y'] > actors[actor]['y'] then
+			  actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
+			  actors[actor]['direction'] = 'down'
+			end
+			--if hitting player, push player to that direction
+			actors[actor]['moving'] = actors[actor]['moving'] - 1
+		end
+			
+		if actors[actor]['hp'] < 1 then
+			actors[actor]['destroyed'] = true
+			incrementPlayerScore(100)
+		end
+	end
 end
 
 function itemGeneration()
@@ -292,6 +318,12 @@ function normalActorGeneration()
 	end
 	for i=1, demonis do
 		createNewActor('demon', 'normal', love.math.random(24),love.math.random(12), 50)
+	end
+	
+    -- small chance to spawn a beer guy on each map
+    random_chance = love.math.random(100)
+    if random_chance < 10 then
+		createNewActor('beer_guy', 'normal', love.math.random(24),love.math.random(12), 50)
 	end
 end
 
