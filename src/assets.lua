@@ -48,9 +48,10 @@ function loadJukeboxSongs()
 	-- todo: something to read contents of jukebox directory
 	jukebox = {}
 
-	jukebox[1] = love.audio.newSource('music/jukebox/sharkest.ogg')
-	jukebox[2] = love.audio.newSource('music/jukebox/urut.ogg')
-  jukebox[3] = love.audio.newSource('music/jukebox/analog.ogg')
+	jukebox[1] = love.audio.newSource('music/jukebox/sharkest.ogg', 'stream')
+	jukebox[2] = love.audio.newSource('music/jukebox/urut.ogg', 'stream')
+  jukebox[3] = love.audio.newSource('music/jukebox/analog.ogg', 'stream')
+  jukebox[4] = love.audio.newSource('music/jukebox/empires.ogg', 'stream')
 end
 
 function loadSpecialSongs()
@@ -58,7 +59,7 @@ function loadSpecialSongs()
   scene_playlists = {}
   
   scene_playlists['guitar_man'] = {}
-  scene_playlists['guitar_man'][1] = love.audio.newSource('music/specials/guitar_man_1.ogg')
+  scene_playlists['guitar_man'][1] = love.audio.newSource('music/specials/guitar_man_1.ogg', 'stream')
 end
 
 function loadActorImages()

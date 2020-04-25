@@ -13,7 +13,7 @@ require 'src/scenes'
 function love.load()
   love.window.setMode(1024, 768)
 	menu_bg = love.graphics.newImage('gfx/bg/menu.jpg')
-	menu_music = love.audio.newSource('music/menu.ogg')
+	menu_music = love.audio.newSource('music/menu.ogg', 'stream')
 	font = love.graphics.newFont('Avara.ttf', 40)
 	love.graphics.setFont(font)
   preloadGraphicsResources()
