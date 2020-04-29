@@ -31,6 +31,9 @@ function player_move(coord_x, coord_y, map)
 	-- check where player is about to move, allow or disallow move based on that and resolve effects
 	-- apply speed / delay factor to movement
 	-- can be used for teleport
+  -- apply target coordinate to player object
+  
+  -- todo: modify this so that actual move is done only AFTER moving timer has ticked to zero
 
 	-- are we still moving?
 	if player['moving'] < 1 then
@@ -45,8 +48,10 @@ function player_move(coord_x, coord_y, map)
 					if tile_attrs[map[coord_x][coord_y]] == nil then
 						-- move. set us on path
 						player['moving'] = 10
-						player['x'] = coord_x
-						player['y'] = coord_y
+						--player['x'] = coord_x
+            player['target_x'] = coord_x
+						--player['y'] = coord_y
+            player['target_y'] = coord_y
 					end
 				elseif coord_y > tablelength(map[x]) and player['arrival'] ~= 'down' then
 					player['arrival'] = 'up'
@@ -71,7 +76,9 @@ end
 function playerCreate()
 	player = {}
 	player['x'] = 2
+  player['target_x'] = nil
 	player['y'] = 15
+  player['target_y'] = nil
 	player['visual_x'] = 2 * tile_size
 	player['visual_y'] = 15 * tile_size
 	player['moving'] = 0
@@ -162,6 +169,8 @@ function playerArrive()
 		player['y'] = tablelength(start_map[1]) - 1 --todo: fix map variable name
 		player['visual_y'] = tablelength(start_map[1]) * tile_size - 1
 	end
+  player['target_x'] = nil
+  player['target_y'] = nil
 end
 
 function playerUseItem()
@@ -293,8 +302,27 @@ function playerControls()
       player['direction'] = 'right'
     end
 	-- code for interacting with environment
-	if love.keyboard.isDown('f') then
-	  playerInteractWithMap()
-	end
+    if love.keyboard.isDown('f') then
+      playerInteractWithMap()
+    end
+    -- update coordinates
+    -- TODO: This could be in a separate function
+    if player['moving'] <= 1 then
+      -- once move delay is done:
+      -- move player towards target coordinate, update actual coordinate once player has reached space
+      if player['target_x'] ~= nil then
+        player['x'] = player['target_x']
+        player['target_x'] = nil
+      end
+      if player['target_y'] ~= nil then
+        player['y'] = player['target_y']
+        player['target_y'] = nil
+      end
+    end
   end
+  if player['moving'] > 0 then
+    player['moving'] = player['moving'] - 1
+  end
+  print(player['x'])
+  print(player['y'])
 end

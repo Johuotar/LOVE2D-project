@@ -126,6 +126,8 @@ function createNewActor(of_type, state, coord_x, coord_y, weight)
 	actors[new_index]['type'] = of_type
 	actors[new_index]['x'] = coord_x
 	actors[new_index]['y'] = coord_y
+  actors[new_index]['target_x'] = nil
+  actors[new_index]['target_y'] = nil
 	actors[new_index]['visual_x'] = coord_x * tile_size
 	actors[new_index]['visual_y'] = coord_y * tile_size
 	actors[new_index]['moving'] = 0
@@ -187,7 +189,6 @@ function runActorLogic(actor)
 		elseif dir == 5 then
 			-- no move
 		end
-		actors[actor]['moving'] = actors[actor]['moving'] - 1
 		
 		-- no score is awarded for destroying fellow beer guys
 		if actors[actor]['hp'] < 1 then
@@ -196,7 +197,6 @@ function runActorLogic(actor)
 			incrementPlayerScore(0)
 		end
 	end
-  
 
 	--lisko: sprawl around randomly!
 	if actors[actor]['type'] == 'lisko' then
@@ -228,7 +228,6 @@ function runActorLogic(actor)
 				-- no move
 			end
 		end
-		actors[actor]['moving'] = actors[actor]['moving'] - 1
 
 		-- set chasing status if player is too near
 		if player['x'] - actors[actor]['x'] < 5 and player['x'] - actors[actor]['x'] > -5 then
@@ -252,43 +251,55 @@ function runActorLogic(actor)
 
 		actor_move(actor, actors[actor]['x'] + dir_x, actors[actor]['y'] + dir_y)
 
-		actors[actor]['moving'] = actors[actor]['moving'] - 1
+		--actors[actor]['moving'] = actors[actor]['moving'] - 1
 		if actors[actor]['hp'] < 1 then
 		  actors[actor]['destroyed'] = true
 		  incrementPlayerScore(5)
 		end
 	end
 
-    if actors[actor]['type'] == 'cop' then
-		-- cop hangs around until provoked
-		-- anti-loiter cops chase players
-		if actors[actor]['status'] == 'anti_loiter' then
-			-- chase player
-			if player['x'] < actors[actor]['x'] then
-			  actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
-			  actors[actor]['direction'] = 'left'
-			end
-			if player['x'] > actors[actor]['x'] then
-			  actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
-			  actors[actor]['direction'] = 'right'
-			end
-			if player['y'] < actors[actor]['y'] then
-			  actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
-			  actors[actor]['direction'] = 'up'
-			end
-			if player['y'] > actors[actor]['y'] then
-			  actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
-			  actors[actor]['direction'] = 'down'
-			end
-			--if hitting player, push player to that direction
-			actors[actor]['moving'] = actors[actor]['moving'] - 1
-		end
-			
-		if actors[actor]['hp'] < 1 then
-			actors[actor]['destroyed'] = true
-			incrementPlayerScore(100)
-		end
+  if actors[actor]['type'] == 'cop' then
+    -- cop hangs around until provoked
+    -- anti-loiter cops chase players
+    if actors[actor]['status'] == 'anti_loiter' then
+      -- chase player
+      if player['x'] < actors[actor]['x'] then
+        actor_move(actor, actors[actor]['x']-1, actors[actor]['y'])
+        actors[actor]['direction'] = 'left'
+      end
+      if player['x'] > actors[actor]['x'] then
+        actor_move(actor, actors[actor]['x']+1, actors[actor]['y'])
+        actors[actor]['direction'] = 'right'
+      end
+      if player['y'] < actors[actor]['y'] then
+        actor_move(actor, actors[actor]['x'], actors[actor]['y']-1)
+        actors[actor]['direction'] = 'up'
+      end
+      if player['y'] > actors[actor]['y'] then
+        actor_move(actor, actors[actor]['x'], actors[actor]['y']+1)
+        actors[actor]['direction'] = 'down'
+      end
+      --if hitting player, push player to that direction
+      actors[actor]['moving'] = actors[actor]['moving'] - 1
+    end
+      
+    if actors[actor]['hp'] < 1 then
+      actors[actor]['destroyed'] = true
+      incrementPlayerScore(100)
+    end
 	end
+  -- for each actor, move it to it's target coordinate after it's moving counter is < 1
+  if actors[actor]['moving'] < 1 then
+    if actors[actor]['target_x'] ~= nil then
+      actors[actor]['x'] = actors[actor]['target_x']
+      actors[actor]['target_x'] = nil
+    end
+    if actors[actor]['target_y'] ~= nil then
+      actors[actor]['y'] = actors[actor]['target_y']
+      actors[actor]['target_y'] = nil
+    end
+  end
+  actors[actor]['moving'] = actors[actor]['moving'] - 1
 end
 
 function itemGeneration()
@@ -388,8 +399,10 @@ function actor_move(actor, coord_x, coord_y)
 						if overlap == false then
 							-- move. set it on path
 							actors[actor]['moving'] = actors[actor]['weight']
-							actors[actor]['x'] = coord_x
-							actors[actor]['y'] = coord_y
+							-- actors[actor]['x'] = coord_x
+              actors[actor]['target_x'] = coord_x
+							-- actors[actor]['y'] = coord_y
+              actors[actor]['target_y'] = coord_y
 						end
 					end
 				end
@@ -424,7 +437,6 @@ function playerInteractWithMap()
 	-- else play "cant do" sound in true spirit of early FPS games ("uhh" from Doom!)
 	-- simple adjacency and direction rule
 	-- todo: check that player does not interact out of bounds
-	print("interacting with map and actors")
 	for i=1, tablelength(actors) do
 		playerInteractWithActor(i)
 	end
@@ -539,9 +551,6 @@ function handleGame()
 		handleActors()
 		handleProjectiles()
 		playerControls()
-    if player['moving'] > 0 then
-      player['moving'] = player['moving'] - 1
-    end
     if player['cooldown'] > 0 then
       player['cooldown'] = player['cooldown'] - 1
     end
@@ -618,6 +627,7 @@ end
 function drawGame()
 	if intermission == 0 then
 		drawSector(start_map)
+    -- BEGIN draw player and player movement
 		if player['visual_x'] < player['x'] * tile_size then
 			player['visual_x'] = player['visual_x'] + 4
 		end
@@ -633,6 +643,7 @@ function drawGame()
 		if player['moving'] > 1 then
       player['walk_delay'] = player['walk_delay'] - 1
     end
+    -- END draw player and player movement
     
     drawItems()
 		drawActors()

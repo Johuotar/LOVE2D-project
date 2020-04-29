@@ -15,8 +15,25 @@ function runProjectileLogic(projectile)
 		elseif projectiles[projectile]['direction'] == 'down' then
 			projectile_move(projectile, projectiles[projectile]['x'], projectiles[projectile]['y'] + 1)
 		end
-    projectiles[projectile]['moving'] = projectiles[projectile]['moving'] - 1
 	end
+  -- move to next grid square when movement time is done
+  if projectiles[projectile]['moving'] < 1 then
+    if projectiles[projectile]['target_x'] ~= nil then
+      projectiles[projectile]['moving'] = 10
+      projectiles[projectile]['x'] = projectiles[projectile]['target_x']
+      projectiles[projectile]['target_x'] = nil
+    end
+    if projectiles[projectile]['target_y'] ~= nil then
+      print("moving to next slot")
+      projectiles[projectile]['moving'] = 10
+      projectiles[projectile]['y'] = projectiles[projectile]['target_y']
+      projectiles[projectile]['target_y'] = nil
+    end
+  end
+  
+  -- todo: presumes that each projectile moves logically
+  projectiles[projectile]['moving'] = projectiles[projectile]['moving'] - 1
+  print(projectiles[projectile]['moving'] )
 end
 
 function handleProjectiles()
@@ -48,6 +65,8 @@ function createNewProjectile(of_type, coord_x, coord_y, direction)
 	projectiles[new_index]['direction'] = direction
 	projectiles[new_index]['x'] = coord_x
 	projectiles[new_index]['y'] = coord_y
+  projectiles[new_index]['target_x'] = coord_x
+  projectiles[new_index]['target_y'] = coord_y
   projectiles[new_index]['weight'] = 3
   projectiles[new_index]['moving'] = 0
 	projectiles[new_index]['visual_x'] = coord_x * tile_size
@@ -68,8 +87,8 @@ function projectile_move(projectile, coord_x, coord_y)
           if tile_attrs[map[coord_x][coord_y]] == nil then
             -- move. set it on path
             projectiles[projectile]['moving'] = projectiles[projectile]['weight']
-            projectiles[projectile]['x'] = coord_x
-            projectiles[projectile]['y'] = coord_y
+            projectiles[projectile]['target_x'] = coord_x
+            projectiles[projectile]['target_y'] = coord_y
           else
             projectiles[projectile]['destroyed'] = true
           end
