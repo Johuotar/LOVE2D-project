@@ -323,6 +323,4 @@ function playerControls()
   if player['moving'] > 0 then
     player['moving'] = player['moving'] - 1
   end
-  print(player['x'])
-  print(player['y'])
 end

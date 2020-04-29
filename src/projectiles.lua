@@ -4,9 +4,25 @@ Projectile drawing and logic.
 
 function runProjectileLogic(projectile)
 	-- do something each iteration depending on projectile.
-	if projectiles[projectile]['type'] == 'puke' then
+	--if projectiles[projectile]['type'] == 'puke' then
 		-- puke flies for some time in a direction then disappears unless it hits an enemy.
-		if projectiles[projectile]['direction'] == 'left' then
+		
+	--end
+  
+  --todo: update when we have multiple projectile types
+  -- move to next grid square when movement time is done
+  if projectiles[projectile]['moving'] < 1 then
+    if projectiles[projectile]['target_x'] ~= nil then
+      projectiles[projectile]['x'] = projectiles[projectile]['target_x']
+      projectiles[projectile]['target_x'] = nil
+    end
+    if projectiles[projectile]['target_y'] ~= nil then
+      projectiles[projectile]['y'] = projectiles[projectile]['target_y']
+      projectiles[projectile]['target_y'] = nil
+    end
+    
+    -- Update new direction
+    if projectiles[projectile]['direction'] == 'left' then
 			projectile_move(projectile, projectiles[projectile]['x'] - 1, projectiles[projectile]['y'])
 		elseif projectiles[projectile]['direction'] == 'right' then
 			projectile_move(projectile, projectiles[projectile]['x'] + 1, projectiles[projectile]['y'])
@@ -15,25 +31,11 @@ function runProjectileLogic(projectile)
 		elseif projectiles[projectile]['direction'] == 'down' then
 			projectile_move(projectile, projectiles[projectile]['x'], projectiles[projectile]['y'] + 1)
 		end
-	end
-  -- move to next grid square when movement time is done
-  if projectiles[projectile]['moving'] < 1 then
-    if projectiles[projectile]['target_x'] ~= nil then
-      projectiles[projectile]['moving'] = 10
-      projectiles[projectile]['x'] = projectiles[projectile]['target_x']
-      projectiles[projectile]['target_x'] = nil
-    end
-    if projectiles[projectile]['target_y'] ~= nil then
-      print("moving to next slot")
-      projectiles[projectile]['moving'] = 10
-      projectiles[projectile]['y'] = projectiles[projectile]['target_y']
-      projectiles[projectile]['target_y'] = nil
-    end
-  end
+  else
   
-  -- todo: presumes that each projectile moves logically
-  projectiles[projectile]['moving'] = projectiles[projectile]['moving'] - 1
-  print(projectiles[projectile]['moving'] )
+    -- todo: presumes that each projectile moves logically
+    projectiles[projectile]['moving'] = projectiles[projectile]['moving'] - 1
+  end
 end
 
 function handleProjectiles()
@@ -65,8 +67,8 @@ function createNewProjectile(of_type, coord_x, coord_y, direction)
 	projectiles[new_index]['direction'] = direction
 	projectiles[new_index]['x'] = coord_x
 	projectiles[new_index]['y'] = coord_y
-  projectiles[new_index]['target_x'] = coord_x
-  projectiles[new_index]['target_y'] = coord_y
+  projectiles[new_index]['target_x'] = nil
+  projectiles[new_index]['target_y'] = nil
   projectiles[new_index]['weight'] = 3
   projectiles[new_index]['moving'] = 0
 	projectiles[new_index]['visual_x'] = coord_x * tile_size
